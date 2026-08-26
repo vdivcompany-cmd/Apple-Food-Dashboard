@@ -1,0 +1,130 @@
+@import "tailwindcss";
+@import "@angular/material/prebuilt-themes/azure-blue.css";
+
+/* Dynamic Root & Dark Mode Variables */
+:root {
+  --app-bg: #F7F7F5;
+  --app-surface: #FFFFFF;
+  --app-surface-container: #F0EFEC;
+  --app-surface-hover: #EBE9E4;
+  --app-surface-active: #E4E2DE;
+  --app-border: #E4E2DE;
+  --app-border-subtle: #ECEAE6;
+  --app-text-primary: #1B1C1A;
+  --app-text-secondary: #5A4136;
+  --app-text-muted: #6B6B6B;
+  --app-card-shadow: 0px 4px 20px rgba(18, 18, 18, 0.04);
+  --app-elevated-shadow: 0px 8px 30px rgba(18, 18, 18, 0.08);
+}
+
+.dark {
+  --app-bg: #131412;
+  --app-surface: #1B1C1A;
+  --app-surface-container: #1F201E;
+  --app-surface-hover: #292A28;
+  --app-surface-active: #343533;
+  --app-border: rgba(90, 65, 54, 0.35);
+  --app-border-subtle: rgba(90, 65, 54, 0.2);
+  --app-text-primary: #E4E2DF;
+  --app-text-secondary: #E2BFB0;
+  --app-text-muted: #A08D85;
+  --app-card-shadow: 0px 4px 20px rgba(0, 0, 0, 0.4);
+  --app-elevated-shadow: 0px 8px 30px rgba(0, 0, 0, 0.6);
+}
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", "Cairo", system-ui, -apple-system, sans-serif;
+
+  /* Theme-aware dynamic surfaces & colors */
+  --color-background: var(--app-bg);
+  --color-surface: var(--app-surface);
+  --color-surface-container: var(--app-surface-container);
+  --color-surface-hover: var(--app-surface-hover);
+  --color-surface-active: var(--app-surface-active);
+
+  --color-border: var(--app-border);
+  --color-border-subtle: var(--app-border-subtle);
+
+  --color-text-primary: var(--app-text-primary);
+  --color-text-secondary: var(--app-text-secondary);
+  --color-text-muted: var(--app-text-muted);
+
+  /* Brand Primary & Accents */
+  --color-primary: #FF6B00;
+  --color-primary-hover: #E55F00;
+  --color-primary-dark: #A04100;
+  --color-primary-tint: #FFB693;
+
+  /* Semantic Status Colors */
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+  --color-info: #3B82F6;
+
+  /* Sizing & Radii */
+  --radius-sm: 0.25rem;
+  --radius-card: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-pill: 9999px;
+
+  /* Shadows */
+  --shadow-card: var(--app-card-shadow);
+  --shadow-elevated: var(--app-elevated-shadow);
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--app-border);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #FF6B00;
+}
+
+/* Base resets & typography defaults */
+html {
+  font-family: var(--font-sans);
+  background-color: var(--app-bg);
+  color: var(--app-text-primary);
+  color-scheme: light dark;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--app-bg);
+  color: var(--app-text-primary);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+}
+
+/* Material theme alignment */
+.mat-mdc-button-base {
+  font-family: var(--font-sans) !important;
+}
+
+.mat-mdc-card {
+  background-color: var(--app-surface) !important;
+  color: var(--app-text-primary) !important;
+  border-radius: 8px !important;
+  border: 1px solid var(--app-border) !important;
+  box-shadow: var(--app-card-shadow) !important;
+}
+
+/* RTL Support utility */
+[dir="rtl"] {
+  direction: rtl;
+  text-align: right;
+}
+[dir="rtl"] .space-x-reverse > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-x-reverse: 1;
+}
+
