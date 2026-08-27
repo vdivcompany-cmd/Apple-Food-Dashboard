@@ -1,20 +1,25 @@
-import { AppIconComponent } from '../../shared/components/app-icon/app-icon.component';
-import { ClickOutsideDirective } from '../../shared/directives/click-outside.directive';
 import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '../auth/auth.service';
 import { ThemeService } from '../theme/theme.service';
 import { LanguageService } from '../i18n/language.service';
+import { OrdersService } from '../../features/orders/orders.service';
+import { NotificationsService } from '../../features/notifications/notifications.service';
+import { AppIconComponent } from '../../shared/components/app-icon/app-icon.component';
+import { ClickOutsideDirective } from '../../shared/directives/click-outside.directive';
+import { EgpCurrencyPipe } from '../../shared/pipes/egyptian-currency.pipe';
+import { RelativeTimePipe } from '../../shared/pipes/relative-time.pipe';
+import { BackendOrder } from '../../shared/models/order.model';
 
 @Component({
   selector: 'app-topbar',
   standalone: true,
-  imports: [CommonModule, RouterModule, AppIconComponent, ClickOutsideDirective],
+  imports: [CommonModule, RouterModule, AppIconComponent, ClickOutsideDirective, EgpCurrencyPipe, RelativeTimePipe],
   template: `
     <!-- Stitch-matched header: bg-surface/90 + backdrop-blur + subtle shadow, h-16 fixed -->
     <header
-      class="h-16 bg-surface/90 backdrop-blur-xl border-b border-border px-4 sm:px-6 flex items-center justify-between sticky top-0 z-40 transition-colors duration-200"
+      class="h-16 bg-surface/90 backdrop-blur-xl border-b border-border px-4 sm:px-6 flex items-center justify-between sticky top-0 z-40 transition-colors duration-200 select-none"
       style="box-shadow: 0 1px 8px rgba(0,0,0,0.04);"
     >
       <!-- ── LEFT: Branch name + Role badge ─────────────── -->
@@ -60,16 +65,131 @@ import { LanguageService } from '../i18n/language.service';
           }
         </button>
 
-        <!-- Notification bell with live dot — Stitch style -->
-        <button
-          type="button"
-          class="relative w-9 h-9 flex items-center justify-center rounded-full hover:bg-surface-container text-text-muted hover:text-text-primary transition cursor-pointer"
-          title="Notifications"
-        >
-          <app-icon name="bell" customClass="w-4 h-4 sm:w-5 sm:h-5"></app-icon>
-          <!-- Live red dot badge -->
-          <span class="absolute top-2 right-2 w-2 h-2 bg-danger rounded-full ring-1 ring-surface"></span>
-        </button>
+        <!-- ── Notification Bell with Live Dropdown ──────── -->
+        <div class="relative" appClickOutside (clickOutside)="closeNotifications()">
+          <button
+            type="button"
+            (click)="toggleNotifications()"
+            class="relative w-9 h-9 flex items-center justify-center rounded-xl hover:bg-surface-container border transition cursor-pointer"
+            [ngClass]="isNotificationsOpen() ? 'bg-surface-container border-border text-primary ring-1 ring-primary/30' : 'border-transparent text-text-muted hover:text-text-primary'"
+            title="Notifications & Activity"
+          >
+            <app-icon name="bell" customClass="w-4 h-4 sm:w-5 sm:h-5"></app-icon>
+            
+            <!-- Live Badge Counter / Dot -->
+            @if (unreadCount() > 0) {
+              <span class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center shadow-xs border-2 border-surface animate-bounce-subtle">
+                {{ unreadCount() > 9 ? '9+' : unreadCount() }}
+              </span>
+            }
+          </button>
+
+          <!-- ── Notification Dropdown Panel ──────────────── -->
+          @if (isNotificationsOpen()) {
+            <div
+              class="absolute right-0 top-12 mt-1.5 w-80 sm:w-96 bg-surface rounded-2xl border border-border shadow-elevated z-50 p-3 animate-[fadeIn_0.15s_ease-out] flex flex-col max-h-[480px]"
+            >
+              <!-- Dropdown Header -->
+              <div class="flex items-center justify-between pb-3 border-b border-border">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-black text-text-primary">Notifications</span>
+                  @if (unreadCount() > 0) {
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-primary/10 text-primary border border-primary/20">
+                      {{ unreadCount() }} New
+                    </span>
+                  }
+                </div>
+
+                <div class="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    (click)="playChimeTest()"
+                    class="p-1 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-container transition text-[11px] font-bold flex items-center gap-1"
+                    title="Test audio chime"
+                  >
+                    <span>🔔 Test</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    (click)="closeNotifications()"
+                    class="p-1 rounded-lg text-text-muted hover:text-text-primary transition"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+
+              <!-- Notifications Scrollable Feed -->
+              <div class="flex-1 overflow-y-auto py-2 space-y-2 divide-y divide-border/40 text-xs">
+                
+                <!-- Recent Orders Alert Section -->
+                @if (recentOrders().length > 0) {
+                  @for (order of recentOrders(); track order._id || order.id) {
+                    <div
+                      (click)="goToOrder(order)"
+                      class="pt-2 first:pt-0 p-2.5 rounded-xl hover:bg-surface-container/80 transition cursor-pointer space-y-1"
+                      [ngClass]="order.status === 'PENDING' ? 'bg-primary/5 border border-primary/20' : ''"
+                    >
+                      <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-1.5">
+                          <span
+                            class="w-2 h-2 rounded-full"
+                            [ngClass]="order.status === 'PENDING' ? 'bg-primary animate-pulse' : 'bg-emerald-500'"
+                          ></span>
+                          <span class="font-mono font-bold text-text-primary">#{{ getOrderNumber(order) }}</span>
+                          @if (order.tableNumber) {
+                            <span class="px-1.5 py-0.2 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded font-black text-[10px]">
+                              Table {{ order.tableNumber }}
+                            </span>
+                          }
+                        </div>
+                        <span class="text-[10px] text-text-muted font-medium">{{ order.createdAt | relativeTime }}</span>
+                      </div>
+
+                      <div class="flex items-center justify-between text-[11px] text-text-muted">
+                        <span>{{ order.customerName || 'Walk-in Guest' }} ({{ order.items.length }} items)</span>
+                        <span class="font-bold text-text-primary font-mono">{{ order.totalAmount || order.subtotal || 0 | egpCurrency }}</span>
+                      </div>
+                    </div>
+                  }
+                } @else if (notificationsService.notifications().length === 0) {
+                  <div class="py-8 text-center text-text-muted space-y-1">
+                    <app-icon name="bell" customClass="w-6 h-6 mx-auto opacity-40"></app-icon>
+                    <p class="text-xs font-bold">All caught up!</p>
+                    <p class="text-[10px]">No new orders or system alerts</p>
+                  </div>
+                }
+
+                <!-- Recent Notifications Section -->
+                @for (notif of notificationsService.notifications().slice(0, 3); track notif._id || notif.id) {
+                  <div class="pt-2 p-2 rounded-xl hover:bg-surface-container/60 transition space-y-0.5">
+                    <div class="flex items-center justify-between">
+                      <span class="font-bold text-[11px] text-text-primary truncate max-w-[200px]">
+                        {{ notif.messageSubject || 'System Alert' }}
+                      </span>
+                      <span class="text-[10px] text-text-muted">{{ notif.dispatchedAt | relativeTime }}</span>
+                    </div>
+                    <p class="text-[11px] text-text-muted line-clamp-1">{{ notif.messageBody }}</p>
+                  </div>
+                }
+
+              </div>
+
+              <!-- Dropdown Footer -->
+              <div class="pt-2 border-t border-border mt-1">
+                <a
+                  routerLink="/notifications"
+                  (click)="closeNotifications()"
+                  class="w-full py-2 px-3 rounded-xl bg-surface-container hover:bg-surface-hover text-primary font-bold text-center block text-xs transition"
+                >
+                  View Full Activity & Audit Log →
+                </a>
+              </div>
+
+            </div>
+          }
+        </div>
 
         <!-- Divider -->
         <div class="h-6 w-px bg-border mx-1"></div>
@@ -201,8 +321,12 @@ export class TopbarComponent {
   private readonly authService = inject(AuthService);
   private readonly themeService = inject(ThemeService);
   private readonly langService = inject(LanguageService);
+  private readonly router = inject(Router);
+  readonly ordersService = inject(OrdersService);
+  readonly notificationsService = inject(NotificationsService);
 
   readonly isDropdownOpen = signal<boolean>(false);
+  readonly isNotificationsOpen = signal<boolean>(false);
 
   readonly currentBranch  = this.authService.currentBranch;
   readonly restaurantName = this.authService.restaurantName;
@@ -211,6 +335,14 @@ export class TopbarComponent {
   readonly isArabic = computed(() => this.langService.currentLanguage() === 'ar');
   readonly isDark   = computed(() => this.themeService.theme() === 'dark');
   readonly userName = computed(() => this.authService.currentUser()?.name || 'Staff User');
+
+  readonly unreadCount = computed(() => {
+    return this.ordersService.pendingOrders().length;
+  });
+
+  readonly recentOrders = computed<BackendOrder[]>(() => {
+    return this.ordersService.orders().slice(0, 6);
+  });
 
   readonly userInitials = computed(() => {
     const name = this.userName();
@@ -241,10 +373,41 @@ export class TopbarComponent {
 
   toggleDropdown(): void {
     this.isDropdownOpen.update(v => !v);
+    if (this.isDropdownOpen()) {
+      this.isNotificationsOpen.set(false);
+    }
   }
 
   closeDropdown(): void {
     this.isDropdownOpen.set(false);
+  }
+
+  toggleNotifications(): void {
+    this.isNotificationsOpen.update(v => !v);
+    if (this.isNotificationsOpen()) {
+      this.isDropdownOpen.set(false);
+      this.notificationsService.fetchNotifications();
+    }
+  }
+
+  closeNotifications(): void {
+    this.isNotificationsOpen.set(false);
+  }
+
+  playChimeTest(): void {
+    this.ordersService.playNewOrderChime();
+  }
+
+  goToOrder(order: BackendOrder): void {
+    this.closeNotifications();
+    this.router.navigate(['/orders']);
+  }
+
+  getOrderNumber(order: BackendOrder): string {
+    if (order.orderNumber) return String(order.orderNumber);
+    if (order._id) return order._id.slice(-4).toUpperCase();
+    if (order.id) return order.id.slice(-4).toUpperCase();
+    return '0000';
   }
 
   toggleLanguage(): void {
