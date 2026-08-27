@@ -108,6 +108,11 @@ export const routes: Routes = [
         loadComponent: () => import('./features/settings/settings.component'),
         canActivate: [roleGuard(['super_admin', 'owner', 'manager'])],
       },
+      {
+        path: 'style-guide',
+        loadComponent: () => import('./features/style-guide/style-guide.component'),
+        canActivate: [roleGuard(['super_admin', 'owner', 'manager'])],
+      },
 
       // Default redirect
       {

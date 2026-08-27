@@ -1,0 +1,26 @@
+{
+  "name": "RestaurantOS — Staff Console",
+  "short_name": "RestaurantOS",
+  "description": "Unified Restaurant Point of Sale, Kitchen Display & Management Console",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#131412",
+  "theme_color": "#FF6B00",
+  "lang": "en",
+  "dir": "auto",
+  "icons": [
+    {
+      "src": "/restaurant-os-logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/restaurantos-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

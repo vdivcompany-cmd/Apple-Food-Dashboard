@@ -21,19 +21,19 @@ import { RestaurantTable } from '../../../shared/models/table.model';
         <!-- Header Controls: Search & Offline Sync Banner -->
         <div class="flex items-center gap-3 mb-4">
           <div class="relative flex-1">
-            <app-icon name="search" customClass="w-4 h-4 text-text-muted absolute left-3.5 top-1/2 -translate-y-1/2"></app-icon>
+            <app-icon name="search" customClass="w-4 h-4 text-text-muted absolute left-3.5 rtl:left-auto rtl:right-3.5 top-1/2 -translate-y-1/2"></app-icon>
             <input
               type="text"
               [ngModel]="catalogService.searchQuery()"
               (ngModelChange)="catalogService.searchQuery.set($event)"
               placeholder="Search dishes, drinks, or ingredients..."
-              class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-surface-container border border-border text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary transition"
+              class="w-full ps-10 pe-10 py-2.5 rounded-xl bg-surface-container border border-border text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary transition"
             />
             @if (catalogService.searchQuery()) {
               <button
                 type="button"
                 (click)="catalogService.searchQuery.set('')"
-                class="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
+                class="absolute right-3 rtl:right-auto rtl:left-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
               >
                 <app-icon name="x" customClass="w-3.5 h-3.5"></app-icon>
               </button>
@@ -119,7 +119,7 @@ import { RestaurantTable } from '../../../shared/models/table.model';
                 <button
                   type="button"
                   (click)="addToCart(product)"
-                  class="flex flex-col text-left bg-surface-container hover:bg-surface-hover border border-border hover:border-primary/50 transition-all rounded-xl overflow-hidden shadow-sm active:scale-[0.98] group cursor-pointer"
+                  class="flex flex-col text-start bg-surface-container hover:bg-surface-hover border border-border hover:border-primary/50 transition-all rounded-xl overflow-hidden shadow-sm active:scale-[0.98] group cursor-pointer"
                 >
                   <!-- Image thumbnail with price badge overlay -->
                   <div class="w-full h-24 bg-surface-hover flex items-center justify-center relative overflow-hidden">
@@ -137,7 +137,7 @@ import { RestaurantTable } from '../../../shared/models/table.model';
                       </span>
                     }
 
-                    <span class="absolute bottom-2 left-2 text-[11px] font-extrabold px-2 py-0.5 bg-primary text-white rounded-md backdrop-blur-sm shadow">
+                    <span class="absolute bottom-2 left-2 rtl:left-auto rtl:right-2 text-[11px] font-extrabold px-2 py-0.5 bg-primary text-white rounded-md backdrop-blur-sm shadow">
                       {{ product.price | egpCurrency }}
                     </span>
                   </div>
