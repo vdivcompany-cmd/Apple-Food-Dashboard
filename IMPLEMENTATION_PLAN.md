@@ -12,8 +12,8 @@ This document is the **single source of truth** for project development progress
 | **Phase 2** | **Auth & Owner/Manager Dashboard** | Production backend API connection (`https://restaurant-saas-platform-backend.vercel.app/`), Stitch-matched Login Screen, Live 4-card KPI Grid, Hourly Revenue SVG Curve, Top Dishes, Live Orders Stream | `✅ Completed` | Build Passed (0 errors, 0 warnings) |
 | **Phase 3** | **POS & Live Orders Board (Cashier)** | Interactive POS (grid/categories, cart, discounts, checkout), Live Orders kanban board, order status transitions | `✅ Completed` | Build Passed (0 errors, 0 warnings) |
 | **Phase 4** | **Kitchen Display System (KDS)** | KDS Ticket Board with timer urgency color coding, KDS Ticket Detail, item-level prep tracking, audio chime alerts | `✅ Completed` | Build Passed (0 errors, 0 warnings) |
-| **Phase 5** | **Menu, Floor Plan & Reservations** | Menu item/category CRUD, modifier groups, Interactive SVG/Canvas Table Floor Plan, Reservations calendar/board | `⬜ Next Up` | Pending |
-| **Phase 6** | **Reports, CRM, Employees & Branches** | Analytics export, Customer profile & order history, Staff management & role assignment, Multi-branch switcher & CRUD | `⬜ Not Started` | Pending |
+| **Phase 5** | **Menu, Floor Plan & Reservations** | Menu item/category CRUD, modifier groups, Interactive SVG/Canvas Table Floor Plan, Reservations calendar/board | `✅ Completed` | Build Passed (0 errors, 0 warnings) |
+| **Phase 6** | **Reports, CRM, Employees & Branches** | Analytics export, Customer profile & order history, Staff management & role assignment, Multi-branch switcher & CRUD | `⬜ Next Up` | Pending |
 | **Phase 7** | **Billing, Promotions, Settings & Feedback** | Subscription tier & invoices, Coupon generator & validation, Restaurant profile & business hours, Guest feedback reviews | `⬜ Not Started` | Pending |
 | **Phase 8** | **Polish, RTL, E2E Tests & Hardening** | Full Arabic RTL support, tablet touch optimizations, Vitest unit test suite, offline caching & sync | `⬜ Not Started` | Pending |
 
@@ -120,27 +120,37 @@ This document is the **single source of truth** for project development progress
 
 ---
 
-### ⬜ Phase 5: Menu Management, Floor Plan & Reservations
-- **Status**: `⬜ Next Up`
-- **Target Deliverables**:
-  1. **Menu Management (`src/app/features/menu`)**:
-     - Category hierarchy & drag-and-drop reordering.
-     - Item creation/edit drawer with variant options, add-ons, pricing, and allergen tags.
-     - Real-time 86/out-of-stock toggle.
-  2. **Table Floor Plan (`src/app/features/tables`)**:
-     - Visual floor plan layout with customizable sections (Indoor, Patio, VIP).
-     - Table status indicators (Vacant, Seated, Bill Requested, Cleaning).
-  3. **Reservations Board (`src/app/features/reservations`)**:
-     - Calendar & timeline slot booking, guest count management, SMS reminder triggers.
+### ✅ Phase 5: Menu Management, Floor Plan & Reservations
+- **Status**: `✅ Completed`
+- **Completed Deliverables**:
+  1. **Menu Management Screen & Service (`src/app/features/menu`)**:
+     - Replaced hardcoded stub with live `MenuService` fetching `/categories` and `/menu` from production backend.
+     - Full Stitch design layout: left category navigation rail with item count badges, category creator modal, search bar, sort dropdown, and grid/list view toggles.
+     - Product cards with food imagery, dietary badges (Spicy, Vegetarian), prep time, and instant inline 86 / Out-of-Stock switch.
+     - Right slide-in Add/Edit Drawer with full product form validation (EN title, AR title, category selector, EGP pricing, prep time, image URL, dietary toggles).
+     - Full live backend CRUD: `POST /menu`, `PATCH /menu/:id`, `DELETE /menu/:id`, `PATCH /menu/:id/toggle-availability`.
+  2. **Table Floor Plan Screen & Service (`src/app/features/tables`)**:
+     - Replaced static stub with live `TablesService` featuring 30-second auto-polling from `GET /api/v1/tables`.
+     - Stitch spatial blueprint layout with radial dot matrix texture, architectural overlay guides (Entrance, Kitchen Pass, Beverage Bar), and dynamic occupancy percentage badge.
+     - Zone filter pills (All Zones, Main Dining, Patio, Bar, VIP Lounge) and live status legend.
+     - Interactive table nodes color-coded by real-time status (Emerald: Available, Amber: Seated, Purple with pulse: Bill Requested, Blue: Reserved) with seated elapsed duration.
+     - Contextual click popover with quick status transitions (`updateTableStatus`) and POS table order shortcuts.
+  3. **Reservations Board Screen & Service (`src/app/features/reservations`)**:
+     - Replaced stub with live `ReservationsService` connected to `GET /api/v1/reservations` and `POST /api/v1/reservations`.
+     - Stitch dual layout: 5-zone Timeline Matrix (30-min intervals from 17:00 to 22:30 across Main Floor, Patio, Bar, VIP Room) + Today's Bookings Feed with party size and table assignment.
+     - Date filter pills (Today, Tomorrow, All Upcoming).
+     - Inline quick status action buttons: Confirm, Seat Guests, Cancel.
+     - Slide-in New Reservation Drawer with customer contact, party size, date/time picker, zone/table assignment, and occasion notes.
+  4. **Verification Log**:
+     - `npm run build` executed successfully with 0 errors and 0 warnings. Lazy chunks `menu-component` (31.82 kB), `tables-component` (18.34 kB), and `reservations-component` (25.38 kB) generated cleanly.
 
 ---
 
 ### ⬜ Phase 6: Reports & Analytics, Customers (CRM), Employees & Branches
-- **Status**: `⬜ Not Started`
+- **Status**: `⬜ Next Up`
 - **Target Deliverables**:
   1. **Reports & Analytics (`src/app/features/reports`)**:
      - Sales summaries, labor cost percentage, product mix (PMIX) reporting, CSV/PDF export.
-     - Export to CSV/PDF.
   2. **Customer CRM (`src/app/features/customers`)**:
      - Guest profiles, lifetime spend, order frequency, loyalty points, personalized notes.
   3. **Staff Management (`src/app/features/employees`)**:
@@ -182,4 +192,6 @@ This document is the **single source of truth** for project development progress
 | 2026-08-26 07:46 UTC | Phase 2 Completion Verification | `npm run build` | `PASS` | 0 errors, 0 warnings. Production backend wired up. |
 | 2026-08-26 17:17 UTC | Phase 3 Completion Verification | `npm run build` | `PASS` | 0 errors, 0 warnings. POS & Live Orders Board with offline queue & live backend. |
 | 2026-08-26 17:50 UTC | Phase 4 Completion Verification | `npm run build` | `PASS` | 0 errors, 0 warnings. KDS Board & Detail with live backend, sound alerts, & urgency tiers. |
+| 2026-08-27 08:08 UTC | Phase 5 Completion Verification | `npm run build` | `PASS` | 0 errors, 0 warnings. Menu, Tables Floor Plan, & Reservations Board with live backend CRUD & Stitch layouts. |
+
 

@@ -6,14 +6,21 @@ export interface MenuItem {
   description?: string;
   descriptionAr?: string;
   price: number;
+  costPrice?: number;
   categoryId?: string;
   category?: string;
   categoryName?: string;
   imageUrl?: string;
   emoji?: string;
   isAvailable?: boolean;
+  isActive?: boolean;
   preparationTimeMinutes?: number;
   allergens?: string[];
+  tags?: string[];
+  isSpicy?: boolean;
+  isVegetarian?: boolean;
+  calories?: number;
+  orderCount?: number;
   optionsGroup?: {
     title: string;
     required: boolean;
@@ -31,4 +38,5 @@ export interface Category {
   displayOrder?: number;
   isActive?: boolean;
 }
+
 

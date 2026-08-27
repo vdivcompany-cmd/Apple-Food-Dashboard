@@ -652,7 +652,7 @@ export default class DashboardComponent implements AfterViewInit, OnDestroy {
     });
 
     // 3. Fetch live menu items to update top items
-    this.http.get<{ success: boolean; data: any[] }>(API_ENDPOINTS.menu.items).subscribe({
+    this.http.get<{ success: boolean; data: any[] }>(API_ENDPOINTS.menu.products).subscribe({
       next: (res) => {
         if (res?.success && Array.isArray(res.data) && res.data.length > 0) {
           const mappedDishes: TopSellingDish[] = res.data.slice(0, 5).map((item: any, idx: number) => ({
@@ -660,10 +660,32 @@ export default class DashboardComponent implements AfterViewInit, OnDestroy {
             rank: idx + 1,
             name: item.name || `Dish #${idx + 1}`,
             nameAr: item.nameAr,
-            ordersCount: item.orderCount || Math.floor(Math.random() * 30 + 15),
-            revenue: (item.price || 150) * (item.orderCount || 25),
+            ordersCount: item.orderCount || (28 - idx * 4),
+            revenue: (item.basePrice || item.price || 140) * (item.orderCount || (28 - idx * 4)),
           }));
           this.topDishes.set(mappedDishes);
+        }
+      },
+      error: () => {},
+    });
+
+    // 4. Fetch live tables to update occupancy KPI
+    this.http.get<{ success: boolean; data: any[] }>(API_ENDPOINTS.tables.list).subscribe({
+      next: (res) => {
+        if (Array.isArray(res?.data) && res.data.length > 0) {
+          const tables = res.data;
+          const total = tables.length;
+          const occupied = tables.filter((t: any) => (t.status || '').toLowerCase() === 'occupied' || (t.status || '').toLowerCase() === 'bill_requested').length;
+          const available = total - occupied;
+          const capacityPct = total > 0 ? Math.round((occupied / total) * 100) : 0;
+
+          this.kpi.update((prev) => ({
+            ...prev,
+            totalTables: total,
+            occupiedTables: occupied,
+            availableTables: available,
+            tableCapacityPercentage: capacityPct,
+          }));
         }
       },
       error: () => {},
