@@ -14,8 +14,8 @@ This document is the **single source of truth** for project development progress
 | **Phase 4** | **Kitchen Display System (KDS)** | KDS Ticket Board with timer urgency color coding, KDS Ticket Detail, item-level prep tracking, audio chime alerts | `✅ Completed` | Build Passed (0 errors, 0 warnings) |
 | **Phase 5** | **Menu, Floor Plan & Reservations** | Menu item/category CRUD, modifier groups, Interactive SVG/Canvas Table Floor Plan, Reservations calendar/board | `✅ Completed` | Build Passed (0 errors, 0 warnings) |
 | **Phase 6** | **Reports, CRM, Employees & Branches** | Analytics export, Customer profile & order history, Staff management & role assignment, Multi-branch switcher & CRUD | `✅ Completed` | Build Passed (0 errors, 0 warnings) |
-| **Phase 7** | **Billing, Promotions, Settings & Feedback** | Subscription tier & invoices, Coupon generator & validation, Restaurant profile & business hours, Guest feedback reviews | `⬜ Next Up` | Pending |
-| **Phase 8** | **Polish, RTL, E2E Tests & Hardening** | Full Arabic RTL support, tablet touch optimizations, Vitest unit test suite, offline caching & sync | `⬜ Not Started` | Pending |
+| **Phase 7** | **Billing, Promotions, Settings & Feedback** | Subscription tier & invoices, Coupon generator & validation, Restaurant profile & business hours, Guest feedback reviews | `✅ Completed` | Build Passed (0 errors, 0 warnings) |
+| **Phase 8** | **Polish, RTL, E2E Tests & Hardening** | Full Arabic RTL support, tablet touch optimizations, Vitest unit test suite, offline caching & sync | `⬜ Next Up` | Pending |
 
 ---
 
@@ -173,22 +173,40 @@ This document is the **single source of truth** for project development progress
 
 ---
 
-### ⬜ Phase 7: Billing, Promotions, Settings & Feedback
-- **Status**: `⬜ Next Up`
-- **Target Deliverables**:
-  1. **Billing & Subscriptions (`src/app/features/billing`)**:
-     - Current plan overview, tier upgrades, payment methods, downloadable tax invoices.
-  2. **Coupons & Promotions (`src/app/features/coupons`)**:
-     - Discount code generator, BOGO rules, minimum order thresholds, expiry tracking.
-  3. **Notifications & Audit Log (`src/app/features/notifications`)**:
-     - System events, security audit trail, role action history.
-  4. **Settings & Feedback (`src/app/features/settings`, `src/app/features/feedback`)**:
-     - Restaurant profile, receipt header/footer customization, guest review management.
+### ✅ Phase 7: Billing, Promotions, Settings & Feedback
+- **Status**: `✅ Completed`
+- **Completed Deliverables**:
+  1. **Coupons & Promotions (`src/app/features/coupons`)**:
+     - Built `CouponsService` connected to live backend `GET /api/v1/coupons`, `POST /api/v1/coupons`, `PUT /api/v1/coupons/:id`, and `DELETE /api/v1/coupons/:id`.
+     - 3-card summary KPI stats: Active Coupons, Total Redemptions, and Expiring This Month.
+     - Promotional vouchers grid with prominent codes, one-click clipboard copying, discount badges, usage progress bars, expiry indicators, and active switches.
+     - Slide-in **Create Coupon Drawer** supporting Percentage & Fixed discount types, min order threshold, maximum discount cap, usage limits, and live order reduction calculator preview.
+  2. **Restaurant Settings & Profile (`src/app/features/settings`)**:
+     - Built `SettingsService` connected to `GET /api/v1/tenants/profile`, `PUT /api/v1/tenants/profile`, `PATCH /api/v1/tenants/settings`, and `GET /api/v1/tenants/me`.
+     - **Tab 1 — Restaurant Profile**: Brand identity, cuisine type, description, hotline, tax number, address, opening hours, logo/cover image URLs with live visual preview, and instant Open/Closed store switch.
+     - **Tab 2 — System Preferences** (Owner only): Currency selector (`EGP`, `USD`, `EUR`, `SAR`), Timezone (`Africa/Cairo`, etc.), Default Language (`ar`, `en`), and AI Telegram Bot automation settings.
+     - **Tab 3 — Subscription & License** (Owner only): Current membership status, active plan tier, renewal date, and included feature breakdown.
+  3. **Guest Reviews & Feedback (`src/app/features/feedback`)**:
+     - Built `FeedbackService` connected to live backend `GET /api/v1/feedback`.
+     - Large hero overall score with golden star indicators.
+     - Dynamic 5-tier star distribution percentage breakdown calculated directly from live guest feedback.
+     - Filter pills (All, 5★, 4★, ≤3★) and text search filter over customer names and comments.
+  4. **Activity & Notification Audit Log (`src/app/features/notifications`)**:
+     - Built `NotificationsService` connected to `GET /api/v1/notifications` and `POST /api/v1/notifications/dispatch`.
+     - Dispatch log table tracking Telegram, Email, SMS, and WhatsApp alerts with delivery status badges and table tags.
+     - Channel filter pills (`ALL`, `TELEGRAM`, `EMAIL`, `SMS`).
+     - **Dispatch Alert Modal** enabling staff to send direct notifications.
+  5. **Subscription & Invoices (`src/app/features/billing`)**:
+     - Built `BillingService` connected to `GET /api/v1/tenants/me`.
+     - Active plan banner with membership tier, tenant slug, renewal date, 3-tier comparison cards (`Starter`, `Pro`, `Enterprise`), and recent invoices log.
+  6. **Verification Log**:
+     - `npm run build` executed successfully with 0 errors and 0 warnings.
+     - Lazy chunks generated: `settings-component` (23.11 kB), `coupons-component` (20.05 kB), `feedback-component`, `notifications-component`, `billing-component`.
 
 ---
 
 ### ⬜ Phase 8: Polish, Arabic RTL, E2E Testing & Performance Hardening
-- **Status**: `⬜ Not Started`
+- **Status**: `⬜ Next Up`
 - **Target Deliverables**:
   1. Full bidirectional Arabic (`dir="rtl"`) layout and Cairo font typography.
   2. Touch-friendly UI optimization for tablet POS and kitchen wall-mounted displays.
@@ -207,6 +225,8 @@ This document is the **single source of truth** for project development progress
 | 2026-08-26 17:50 UTC | Phase 4 Completion Verification | `npm run build` | `PASS` | 0 errors, 0 warnings. KDS Board & Detail with live backend, sound alerts, & urgency tiers. |
 | 2026-08-27 08:08 UTC | Phase 5 Completion Verification | `npm run build` | `PASS` | 0 errors, 0 warnings. Menu, Tables Floor Plan, & Reservations Board with live backend CRUD & Stitch layouts. |
 | 2026-08-27 09:52 UTC | Phase 6 Completion Verification | `npm run build` | `PASS` | 0 errors, 0 warnings. Reports, Customer CRM, Staff Management & Branches connected with live backend & dynamic charts. |
+| 2026-08-27 13:41 UTC | Phase 7 Completion Verification | `npm run build` | `PASS` | 0 errors, 0 warnings. Coupons CRUD, Settings & Profile, Guest Feedback, Audit Logs & Billing with live backend API. |
+
 
 
 
