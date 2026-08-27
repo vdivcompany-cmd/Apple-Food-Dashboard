@@ -13,7 +13,7 @@ import { OrdersService } from '../../features/orders/orders.service';
   imports: [CommonModule, RouterModule, AppIconComponent],
   template: `
     <aside
-      class="h-screen bg-surface-container text-text-primary border-r border-border flex flex-col transition-all duration-300 select-none z-30 sticky top-0 flex-shrink-0"
+      class="h-screen bg-surface-container text-text-primary border-r rtl:border-r-0 rtl:border-l border-border flex flex-col transition-all duration-300 select-none z-30 sticky top-0 flex-shrink-0"
       [ngClass]="!isCollapsed() ? 'w-[240px]' : 'w-[72px]'"
     >
       <!-- ── Brand Header ─────────────────────────────── -->
@@ -37,10 +37,10 @@ import { OrdersService } from '../../features/orders/orders.service';
         <button
           type="button"
           (click)="toggleCollapse()"
-          class="w-7 h-7 rounded-md flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors flex-shrink-0 ml-auto cursor-pointer"
+          class="w-7 h-7 rounded-md flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors flex-shrink-0 ms-auto cursor-pointer"
           [title]="isCollapsed() ? 'Expand Sidebar' : 'Collapse to Rail'"
         >
-          <app-icon [name]="isCollapsed() ? 'chevron-right' : 'chevron-left'" customClass="w-3.5 h-3.5"></app-icon>
+          <app-icon [name]="isCollapsed() ? 'chevron-right' : 'chevron-left'" customClass="w-3.5 h-3.5 rtl-flip"></app-icon>
         </button>
       </div>
 
@@ -61,9 +61,9 @@ import { OrdersService } from '../../features/orders/orders.service';
           @for (item of operationsItems(); track item.id) {
             <a
               [routerLink]="item.route"
-              routerLinkActive="!bg-primary/10 !text-primary font-semibold border-l-4 border-primary"
+              routerLinkActive="!bg-primary/10 !text-primary font-semibold border-l-4 rtl:border-l-0 rtl:border-r-4 border-primary"
               [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }"
-              class="flex items-center gap-3 mx-2 px-3 py-2 rounded-r-lg text-[13px] text-text-primary/75 hover:text-text-primary hover:bg-surface-hover transition-all group relative border-l-4 border-transparent"
+              class="flex items-center gap-3 mx-2 px-3 py-2 rounded-r-lg rtl:rounded-r-none rtl:rounded-l-lg text-[13px] text-text-primary/75 hover:text-text-primary hover:bg-surface-hover transition-all group relative border-l-4 rtl:border-l-0 rtl:border-r-4 border-transparent"
               [class.justify-center]="isCollapsed()"
               [class.mx-0]="isCollapsed()"
               [class.rounded-none]="isCollapsed()"
@@ -112,9 +112,9 @@ import { OrdersService } from '../../features/orders/orders.service';
           @for (item of managementItems(); track item.id) {
             <a
               [routerLink]="item.route"
-              routerLinkActive="!bg-primary/10 !text-primary font-semibold border-l-4 border-primary"
+              routerLinkActive="!bg-primary/10 !text-primary font-semibold border-l-4 rtl:border-l-0 rtl:border-r-4 border-primary"
               [routerLinkActiveOptions]="{ exact: false }"
-              class="flex items-center gap-3 mx-2 px-3 py-2 rounded-r-lg text-[13px] text-text-primary/75 hover:text-text-primary hover:bg-surface-hover transition-all group relative border-l-4 border-transparent"
+              class="flex items-center gap-3 mx-2 px-3 py-2 rounded-r-lg rtl:rounded-r-none rtl:rounded-l-lg text-[13px] text-text-primary/75 hover:text-text-primary hover:bg-surface-hover transition-all group relative border-l-4 rtl:border-l-0 rtl:border-r-4 border-transparent"
               [class.justify-center]="isCollapsed()"
               [class.mx-0]="isCollapsed()"
               [class.rounded-none]="isCollapsed()"
@@ -157,9 +157,9 @@ import { OrdersService } from '../../features/orders/orders.service';
           @for (item of systemItems(); track item.id) {
             <a
               [routerLink]="item.route"
-              routerLinkActive="!bg-primary/10 !text-primary font-semibold border-l-4 border-primary"
+              routerLinkActive="!bg-primary/10 !text-primary font-semibold border-l-4 rtl:border-l-0 rtl:border-r-4 border-primary"
               [routerLinkActiveOptions]="{ exact: false }"
-              class="flex items-center gap-3 mx-2 px-3 py-2 rounded-r-lg text-[13px] text-text-primary/75 hover:text-text-primary hover:bg-surface-hover transition-all group relative border-l-4 border-transparent"
+              class="flex items-center gap-3 mx-2 px-3 py-2 rounded-r-lg rtl:rounded-r-none rtl:rounded-l-lg text-[13px] text-text-primary/75 hover:text-text-primary hover:bg-surface-hover transition-all group relative border-l-4 rtl:border-l-0 rtl:border-r-4 border-transparent"
               [class.justify-center]="isCollapsed()"
               [class.mx-0]="isCollapsed()"
               [class.rounded-none]="isCollapsed()"

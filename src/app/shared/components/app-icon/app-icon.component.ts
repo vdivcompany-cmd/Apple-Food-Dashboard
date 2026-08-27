@@ -96,7 +96,11 @@ export class AppIconComponent {
     'minus': '<path d="M5 12h14"/>',
     'check': '<polyline points="20 6 9 17 4 12"/>',
     'user': '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
-    'table-restaurant': '<path d="M4 6h16"/><path d="M4 6v14"/><path d="M20 6v14"/><path d="M8 6v10"/><path d="M16 6v10"/><path d="M8 16h8"/>',
+    'table-restaurant': '<circle cx="12" cy="12" r="5"/><path d="M12 2v3"/><path d="M12 19v3"/><path d="M2 12h3"/><path d="M19 12h3"/><rect width="4" height="2" x="10" y="1" rx="0.5"/><rect width="4" height="2" x="10" y="21" rx="0.5"/><rect width="2" height="4" x="1" y="10" rx="0.5"/><rect width="2" height="4" x="21" y="10" rx="0.5"/>',
+    'pos': '<rect width="18" height="18" x="3" y="3" rx="3"/><rect width="12" height="5" x="6" y="6" rx="1"/><circle cx="8" cy="14" r="1"/><circle cx="12" cy="14" r="1"/><circle cx="16" cy="14" r="1"/><circle cx="8" cy="17" r="1"/><circle cx="12" cy="17" r="1"/><circle cx="16" cy="17" r="1"/>',
+    'point-of-sale': '<rect width="18" height="18" x="3" y="3" rx="3"/><rect width="12" height="5" x="6" y="6" rx="1"/><circle cx="8" cy="14" r="1"/><circle cx="12" cy="14" r="1"/><circle cx="16" cy="14" r="1"/><circle cx="8" cy="17" r="1"/><circle cx="12" cy="17" r="1"/><circle cx="16" cy="17" r="1"/>',
+    'badge': '<rect width="18" height="14" x="3" y="7" rx="2"/><path d="M10 2h4a2 2 0 0 1 2 2v3H8V4a2 2 0 0 1 2-2Z"/><circle cx="12" cy="12" r="2"/><path d="M8 18a4 4 0 0 1 8 0"/>',
+    'history': '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><polyline points="12 7 12 12 15 15"/>',
     'wifi': '<path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" x2="12.01" y1="20" y2="20"/>',
     'wifi-off': '<line x1="1" x2="23" y1="1" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" x2="12.01" y1="20" y2="20"/>',
     'chevron-down': '<path d="m6 9 6 6 6-6"/>',
@@ -121,6 +125,10 @@ export class AppIconComponent {
     'filter-list': '<polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>',
     'copy': '<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
     'message-square': '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+    'palette': '<circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.563-2.512 5.563-5.563C22 6.5 17.5 2 12 2Z"/>',
+    'widgets': '<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
+    'text-fields': '<polyline points="4 7 4 4 20 4 20 7"/><line x1="9" x2="15" y1="20" y2="20"/><line x1="12" x2="12" y1="4" y2="20"/>',
+    'analytics': '<path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/>',
   };
 
   readonly svgContent = computed<SafeHtml>(() => {
