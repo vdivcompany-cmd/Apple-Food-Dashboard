@@ -1,4 +1,4 @@
-﻿import { Injectable, signal, effect } from '@angular/core';
+import { Injectable, signal, computed, effect } from '@angular/core';
 
 export type Language = 'en' | 'ar';
 export type Direction = 'ltr' | 'rtl';
@@ -9,7 +9,7 @@ export type Direction = 'ltr' | 'rtl';
 export class LanguageService {
   private readonly STORAGE_KEY = 'restaurant_os_lang';
   readonly currentLanguage = signal<Language>('en');
-  readonly direction = signal<Direction>('ltr');
+  readonly direction = computed<Direction>(() => (this.currentLanguage() === 'ar' ? 'rtl' : 'ltr'));
 
   constructor() {
     const saved = localStorage.getItem(this.STORAGE_KEY) as Language | null;
@@ -19,8 +19,7 @@ export class LanguageService {
 
     effect(() => {
       const lang = this.currentLanguage();
-      const dir = lang === 'ar' ? 'rtl' : 'ltr';
-      this.direction.set(dir);
+      const dir = this.direction();
       document.documentElement.setAttribute('lang', lang);
       document.documentElement.setAttribute('dir', dir);
       localStorage.setItem(this.STORAGE_KEY, lang);

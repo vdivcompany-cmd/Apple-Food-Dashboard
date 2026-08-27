@@ -119,12 +119,45 @@ body {
   box-shadow: var(--app-card-shadow) !important;
 }
 
-/* RTL Support utility */
+/* RTL Support & Bidirectional Utilities */
 [dir="rtl"] {
   direction: rtl;
   text-align: right;
 }
+
 [dir="rtl"] .space-x-reverse > :not([hidden]) ~ :not([hidden]) {
   --tw-space-x-reverse: 1;
+}
+
+/* Mirror directional icons (chevrons, back arrows) in RTL */
+[dir="rtl"] .rtl-flip {
+  transform: scaleX(-1);
+}
+
+/* Logical positioning helpers for drawers and popovers */
+[dir="rtl"] .rtl-drawer-right {
+  right: auto !important;
+  left: 0 !important;
+}
+
+[dir="rtl"] .rtl-dropdown-right {
+  right: auto !important;
+  left: 0 !important;
+}
+
+/* Touch targets & Mobile/Tablet responsiveness */
+button, a, input, select, textarea {
+  touch-action: manipulation;
+}
+
+@media (pointer: coarse) {
+  button, [role="button"] {
+    min-height: 40px;
+  }
+  
+  .touch-target-lg {
+    min-height: 48px;
+    min-width: 48px;
+  }
 }
 

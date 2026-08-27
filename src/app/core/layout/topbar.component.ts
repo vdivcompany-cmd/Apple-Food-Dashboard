@@ -78,7 +78,7 @@ import { BackendOrder } from '../../shared/models/order.model';
             
             <!-- Live Badge Counter / Dot -->
             @if (unreadCount() > 0) {
-              <span class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center shadow-xs border-2 border-surface animate-bounce-subtle">
+              <span class="absolute -top-1 -right-1 rtl:-right-auto rtl:-left-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center shadow-xs border-2 border-surface animate-bounce-subtle">
                 {{ unreadCount() > 9 ? '9+' : unreadCount() }}
               </span>
             }
@@ -87,7 +87,7 @@ import { BackendOrder } from '../../shared/models/order.model';
           <!-- ── Notification Dropdown Panel ──────────────── -->
           @if (isNotificationsOpen()) {
             <div
-              class="absolute right-0 top-12 mt-1.5 w-80 sm:w-96 bg-surface rounded-2xl border border-border shadow-elevated z-50 p-3 animate-[fadeIn_0.15s_ease-out] flex flex-col max-h-[480px]"
+              class="absolute right-0 rtl:right-auto rtl:left-0 top-12 mt-1.5 w-80 sm:w-96 bg-surface rounded-2xl border border-border shadow-elevated z-50 p-3 animate-[fadeIn_0.15s_ease-out] flex flex-col max-h-[480px]"
             >
               <!-- Dropdown Header -->
               <div class="flex items-center justify-between pb-3 border-b border-border">
@@ -229,7 +229,7 @@ import { BackendOrder } from '../../shared/models/order.model';
           <!-- ── User Dropdown Panel ─────────────────────── -->
           @if (isDropdownOpen()) {
             <div
-              class="absolute right-0 top-12 mt-1.5 w-64 bg-surface rounded-2xl border border-border shadow-elevated z-50 p-2 animate-[fadeIn_0.15s_ease-out]"
+              class="absolute right-0 rtl:right-auto rtl:left-0 top-12 mt-1.5 w-64 bg-surface rounded-2xl border border-border shadow-elevated z-50 p-2 animate-[fadeIn_0.15s_ease-out]"
             >
               <!-- Dropdown Header: User Info Card -->
               <div class="p-3 rounded-xl bg-surface-container border border-border/60 mb-2">
