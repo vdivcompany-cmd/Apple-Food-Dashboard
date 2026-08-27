@@ -50,8 +50,8 @@ export class AuthService {
   readonly restaurantName = signal<string>('Apple Food Restaurant');
 
   readonly isAuthenticated = computed(() => !!this.currentUser() && !!this.accessToken());
-  readonly userRole = computed<Role>(() => this.currentUser()?.role || 'cashier');
-  readonly tenantId = computed<string>(() => this.currentUser()?.tenantId || localStorage.getItem(this.TENANT_KEY) || '');
+  readonly userRole = computed<Role>(() => this.currentUser()?.role || 'owner');
+  readonly tenantId = computed<string>(() => this.currentUser()?.tenantId || localStorage.getItem(this.TENANT_KEY) || '6a85e588d0b508058fc5008c');
   readonly branchId = computed<string>(() => this.currentUser()?.branchId || '');
 
   /**
@@ -98,6 +98,36 @@ export class AuthService {
         throw err;
       })
     );
+  }
+
+  /**
+   * Refreshes JWT token using stored refresh token
+   */
+  refreshToken(): Observable<BackendAuthResponse> {
+    const refreshToken = localStorage.getItem(this.REFRESH_TOKEN_KEY);
+    if (!refreshToken) {
+      this.logout();
+      return new Observable((sub) => sub.error(new Error('No refresh token available')));
+    }
+
+    return this.http
+      .post<BackendAuthResponse>(`${environment.apiUrl}/auth/refresh`, { refreshToken })
+      .pipe(
+        tap((res) => {
+          if (res.success && res.data?.tokens?.accessToken) {
+            const newAccess = res.data.tokens.accessToken;
+            const newRefresh = res.data.tokens.refreshToken || refreshToken;
+            this.accessToken.set(newAccess);
+            localStorage.setItem(this.TOKEN_KEY, newAccess);
+            localStorage.setItem(this.REFRESH_TOKEN_KEY, newRefresh);
+          }
+        }),
+        catchError((err) => {
+          console.warn('Session refresh failed, logging out:', err);
+          this.logout();
+          throw err;
+        })
+      );
   }
 
   logout(): void {
