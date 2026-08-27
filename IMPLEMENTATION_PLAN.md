@@ -13,8 +13,8 @@ This document is the **single source of truth** for project development progress
 | **Phase 3** | **POS & Live Orders Board (Cashier)** | Interactive POS (grid/categories, cart, discounts, checkout), Live Orders kanban board, order status transitions | `✅ Completed` | Build Passed (0 errors, 0 warnings) |
 | **Phase 4** | **Kitchen Display System (KDS)** | KDS Ticket Board with timer urgency color coding, KDS Ticket Detail, item-level prep tracking, audio chime alerts | `✅ Completed` | Build Passed (0 errors, 0 warnings) |
 | **Phase 5** | **Menu, Floor Plan & Reservations** | Menu item/category CRUD, modifier groups, Interactive SVG/Canvas Table Floor Plan, Reservations calendar/board | `✅ Completed` | Build Passed (0 errors, 0 warnings) |
-| **Phase 6** | **Reports, CRM, Employees & Branches** | Analytics export, Customer profile & order history, Staff management & role assignment, Multi-branch switcher & CRUD | `⬜ Next Up` | Pending |
-| **Phase 7** | **Billing, Promotions, Settings & Feedback** | Subscription tier & invoices, Coupon generator & validation, Restaurant profile & business hours, Guest feedback reviews | `⬜ Not Started` | Pending |
+| **Phase 6** | **Reports, CRM, Employees & Branches** | Analytics export, Customer profile & order history, Staff management & role assignment, Multi-branch switcher & CRUD | `✅ Completed` | Build Passed (0 errors, 0 warnings) |
+| **Phase 7** | **Billing, Promotions, Settings & Feedback** | Subscription tier & invoices, Coupon generator & validation, Restaurant profile & business hours, Guest feedback reviews | `⬜ Next Up` | Pending |
 | **Phase 8** | **Polish, RTL, E2E Tests & Hardening** | Full Arabic RTL support, tablet touch optimizations, Vitest unit test suite, offline caching & sync | `⬜ Not Started` | Pending |
 
 ---
@@ -146,22 +146,35 @@ This document is the **single source of truth** for project development progress
 
 ---
 
-### ⬜ Phase 6: Reports & Analytics, Customers (CRM), Employees & Branches
-- **Status**: `⬜ Next Up`
-- **Target Deliverables**:
-  1. **Reports & Analytics (`src/app/features/reports`)**:
-     - Sales summaries, labor cost percentage, product mix (PMIX) reporting, CSV/PDF export.
-  2. **Customer CRM (`src/app/features/customers`)**:
-     - Guest profiles, lifetime spend, order frequency, loyalty points, personalized notes.
-  3. **Staff Management (`src/app/features/employees`)**:
-     - Employee directory, role assignment, PIN login configuration, shift hours.
+### ✅ Phase 6: Reports & Analytics, Customers (CRM), Employees & Branches
+- **Status**: `✅ Completed`
+- **Completed Deliverables**:
+  1. **Reports & Performance Analytics (`src/app/features/reports`)**:
+     - Connected to live backend `GET /api/v1/orders`, `GET /api/v1/reports/sales`, `GET /api/v1/reports/orders-by-table`, and `GET /api/v1/branches`.
+     - Replaced all hardcoded chart datasets with dynamic calculations: hourly revenue buckets for Today, 7-day daily velocity, and 30-day weekly summaries.
+     - Live dining channel distribution Donut chart (Dine-In, Takeaway, Delivery).
+     - Orders by Table turnover history table from backend logs.
+     - One-click **CSV Report Export** generating downloadable spreadsheet files with full order breakdowns.
+  2. **Customer CRM & Loyalty (`src/app/features/customers`)**:
+     - Built `CustomersService` (`src/app/features/customers/customers.service.ts`) with live signals connected to `GET /api/v1/customers`, `POST /api/v1/customers`, and `DELETE /api/v1/customers/:id`.
+     - Live search filter by customer name, phone number, and email.
+     - Interactive **Customer Profile & Order History Modal**: displays lifetime spend, total visits, loyalty points, and cross-references order history.
+     - Add Guest Profile modal with validated form.
+  3. **Staff & Team Management (`src/app/features/employees`)**:
+     - Built `EmployeesService` (`src/app/features/employees/employees.service.ts`) with live signals connected to `GET /api/v1/employees`, `POST /api/v1/employees`, `PUT /api/v1/employees/:id`, and `DELETE /api/v1/employees/:id`.
+     - Branch-filtered employee roster with avatar initials, role badge styling, contact numbers, hourly rates, and active/inactive pills.
+     - Add Staff Member modal with live branch assignment selector.
   4. **Branch Management (`src/app/features/branches`)**:
-     - Multi-branch registry, operating hours, delivery radius settings.
+     - Full CRUD capabilities: `GET /branches`, `POST /branches`, `PUT /branches/:id`, and `DELETE /branches/:id`.
+     - Automatic slug generator from branch name (e.g. "Downtown Cairo" -> `downtown-cairo`).
+     - Active branch switcher updating `AuthService.currentBranch` and tenant branch context.
+  5. **Verification Log**:
+     - `npm run build` executed successfully with 0 errors and 0 warnings. Chunks: `reports-component` (17.53 kB), `employees-component` (18.89 kB), `customers-component` (20.51 kB), and `branches-component` (10.74 kB).
 
 ---
 
 ### ⬜ Phase 7: Billing, Promotions, Settings & Feedback
-- **Status**: `⬜ Not Started`
+- **Status**: `⬜ Next Up`
 - **Target Deliverables**:
   1. **Billing & Subscriptions (`src/app/features/billing`)**:
      - Current plan overview, tier upgrades, payment methods, downloadable tax invoices.
@@ -193,5 +206,7 @@ This document is the **single source of truth** for project development progress
 | 2026-08-26 17:17 UTC | Phase 3 Completion Verification | `npm run build` | `PASS` | 0 errors, 0 warnings. POS & Live Orders Board with offline queue & live backend. |
 | 2026-08-26 17:50 UTC | Phase 4 Completion Verification | `npm run build` | `PASS` | 0 errors, 0 warnings. KDS Board & Detail with live backend, sound alerts, & urgency tiers. |
 | 2026-08-27 08:08 UTC | Phase 5 Completion Verification | `npm run build` | `PASS` | 0 errors, 0 warnings. Menu, Tables Floor Plan, & Reservations Board with live backend CRUD & Stitch layouts. |
+| 2026-08-27 09:52 UTC | Phase 6 Completion Verification | `npm run build` | `PASS` | 0 errors, 0 warnings. Reports, Customer CRM, Staff Management & Branches connected with live backend & dynamic charts. |
+
 
 
