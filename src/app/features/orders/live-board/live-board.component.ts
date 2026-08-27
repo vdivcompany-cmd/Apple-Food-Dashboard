@@ -14,6 +14,47 @@ import { BackendOrder, BackendOrderChannel, BackendOrderStatus } from '../../../
   template: `
     <div class="space-y-5 select-none">
       
+      <!-- 🔔 New Incoming Order Live Toast Alert -->
+      @if (ordersService.hasNewOrderAlert() && ordersService.latestNewOrder(); as newOrder) {
+        <div class="p-4 rounded-2xl bg-primary text-white shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-in border border-white/20">
+          <div class="flex items-center gap-3.5">
+            <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-white shrink-0">
+              <app-icon name="bell" customClass="w-5 h-5 animate-bounce"></app-icon>
+            </div>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-[10px] font-black uppercase tracking-wider bg-white/25 px-2 py-0.5 rounded-lg">New Incoming Order</span>
+                <span class="text-xs font-black font-mono">#{{ getOrderDisplayNumber(newOrder) }}</span>
+                @if (newOrder.tableNumber) {
+                  <span class="text-[11px] font-black bg-amber-400 text-neutral-900 px-2 py-0.5 rounded-lg">Table {{ newOrder.tableNumber }}</span>
+                }
+              </div>
+              <p class="text-xs font-medium text-white/90 mt-0.5">
+                {{ newOrder.customerName || 'Guest' }} • {{ newOrder.items.length }} items • {{ newOrder.totalAmount || newOrder.subtotal || 0 | egpCurrency }}
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 self-end sm:self-auto">
+            <button
+              type="button"
+              (click)="openDetailModal(newOrder); ordersService.dismissNewOrderAlert()"
+              class="px-4 py-2 bg-white text-primary rounded-xl text-xs font-black shadow-xs hover:bg-white/90 transition cursor-pointer"
+            >
+              View Order
+            </button>
+            <button
+              type="button"
+              (click)="ordersService.dismissNewOrderAlert()"
+              class="p-2 text-white/80 hover:text-white rounded-xl transition cursor-pointer"
+              title="Dismiss"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      }
+
       <!-- Top Bar: Header & Controls -->
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -549,6 +590,7 @@ export default class LiveBoardComponent implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
+    this.ordersService.requestNotificationPermission();
     this.ordersService.fetchOrders(true);
   }
 

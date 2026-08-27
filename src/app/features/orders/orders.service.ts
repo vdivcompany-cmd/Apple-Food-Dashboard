@@ -25,10 +25,18 @@ export class OrdersService {
   readonly lastSynced = signal<Date>(new Date());
   readonly isOnline = signal<boolean>(typeof navigator !== 'undefined' ? navigator.onLine : true);
 
+  // Table number cache (tableId -> table.number)
+  readonly tableMap = signal<Map<string, number>>(new Map());
+
   // Offline queue
   readonly offlineQueue = signal<OfflineOrderEntry[]>(this.loadOfflineQueue());
   readonly isSyncingOffline = signal<boolean>(false);
 
+  // New incoming order notification signals
+  readonly latestNewOrder = signal<BackendOrder | null>(null);
+  readonly hasNewOrderAlert = signal<boolean>(false);
+
+  private isInitialFetch = true;
   private autoRefreshTimer: any = null;
 
   // Computed Kanban column groupings
@@ -72,6 +80,9 @@ export class OrdersService {
       }
     });
 
+    // Fetch tables lookup cache
+    this.fetchTablesMap();
+
     // Start auto-refresh timer (every 15s)
     this.startAutoRefresh();
   }
@@ -84,6 +95,25 @@ export class OrdersService {
     } catch {
       return [];
     }
+  }
+
+  fetchTablesMap(): void {
+    this.http.get<{ success: boolean; data: any }>(API_ENDPOINTS.tables.list).subscribe({
+      next: (res) => {
+        const rawList = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+        const map = new Map<string, number>();
+        rawList.forEach((t: any) => {
+          const id = t._id || t.id;
+          if (id && t.number !== undefined) {
+            map.set(String(id), Number(t.number));
+          }
+        });
+        this.tableMap.set(map);
+      },
+      error: (err) => {
+        console.warn('OrdersService.fetchTablesMap failed:', err);
+      },
+    });
   }
 
   startAutoRefresh(intervalMs = 15000): void {
@@ -116,8 +146,43 @@ export class OrdersService {
     this.http.get<{ success: boolean; data: BackendOrder[] }>(API_ENDPOINTS.orders.list).subscribe({
       next: (res) => {
         const data = Array.isArray(res?.data) ? res.data : [];
+        const prevList = this.orders();
+        const prevIds = new Set(prevList.map((o) => o._id || o.id));
+
+        // Enrich with tableNumber if missing but tableId is known
+        const tMap = this.tableMap();
+        const enriched = data.map((o: any) => {
+          let tNum = o.tableNumber;
+          if (tNum === undefined || tNum === null || tNum === '') {
+            if (o.tableId && tMap.has(String(o.tableId))) {
+              tNum = tMap.get(String(o.tableId));
+            }
+          }
+          return {
+            ...o,
+            tableNumber: tNum,
+          };
+        });
+
         // Sort descending by createdAt
-        const sorted = data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        const sorted = enriched.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+        // Check for newly arrived PENDING orders
+        if (!this.isInitialFetch && prevList.length > 0) {
+          const newlyArrived = sorted.filter((o: any) => {
+            const id = o._id || o.id;
+            return !prevIds.has(id) && o.status === 'PENDING';
+          });
+
+          if (newlyArrived.length > 0) {
+            this.playNewOrderChime();
+            this.showNativeNotification(newlyArrived);
+            this.latestNewOrder.set(newlyArrived[0]);
+            this.hasNewOrderAlert.set(true);
+          }
+        }
+
+        this.isInitialFetch = false;
         this.orders.set(sorted);
         this.lastSynced.set(new Date());
         this.isLoading.set(false);
@@ -130,6 +195,102 @@ export class OrdersService {
         this.isRefreshing.set(false);
       },
     });
+  }
+
+  /**
+   * Synthesize crisp 2-tone order bell alert (880Hz -> 1174.66Hz)
+   */
+  playNewOrderChime(): void {
+    try {
+      if (typeof window === 'undefined') return;
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const now = ctx.currentTime;
+
+      // Tone 1: High chime (880 Hz - A5)
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(880, now);
+      gain1.gain.setValueAtTime(0.3, now);
+      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+      osc1.connect(gain1);
+      gain1.connect(ctx.destination);
+      osc1.start(now);
+      osc1.stop(now + 0.35);
+
+      // Tone 2: Bright finish (1174.66 Hz - D6)
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(1174.66, now + 0.12);
+      gain2.gain.setValueAtTime(0.35, now + 0.12);
+      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.start(now + 0.12);
+      osc2.stop(now + 0.6);
+    } catch (e) {
+      console.warn('playNewOrderChime failed:', e);
+    }
+  }
+
+  /**
+   * Send browser native Notification banner
+   */
+  showNativeNotification(newOrders: BackendOrder[]): void {
+    if (typeof window === 'undefined' || !('Notification' in window)) return;
+    if (Notification.permission !== 'granted') return;
+
+    try {
+      const latest = newOrders[0];
+      const tableInfo = latest.tableNumber
+        ? ` (Table ${latest.tableNumber})`
+        : latest.channel === 'DINE_IN'
+        ? ' (Dine-In)'
+        : ` (${latest.channel})`;
+
+      const title =
+        newOrders.length === 1
+          ? `🔔 New Order #${latest.orderNumber || latest._id?.slice(-4) || 'New'}`
+          : `🔔 ${newOrders.length} New Orders Received!`;
+
+      const body =
+        newOrders.length === 1
+          ? `${latest.customerName || 'Guest'}${tableInfo} • Total: ${latest.totalAmount || latest.subtotal || 0} EGP`
+          : `Latest: #${latest.orderNumber || latest._id?.slice(-4) || ''}${tableInfo} • Click to view live board`;
+
+      const notification = new Notification(title, {
+        body,
+        icon: '/favicon.ico',
+        tag: 'restaurant_new_order_' + Date.now(),
+      });
+
+      notification.onclick = () => {
+        window.focus();
+        notification.close();
+      };
+    } catch (e) {
+      console.warn('showNativeNotification failed:', e);
+    }
+  }
+
+  async requestNotificationPermission(): Promise<void> {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      if (Notification.permission === 'default') {
+        try {
+          await Notification.requestPermission();
+        } catch (e) {
+          console.warn('Notification.requestPermission error:', e);
+        }
+      }
+    }
+  }
+
+  dismissNewOrderAlert(): void {
+    this.hasNewOrderAlert.set(false);
+    this.latestNewOrder.set(null);
   }
 
   async createOrder(payload: CreateOrderPayload): Promise<{ success: boolean; order?: BackendOrder; offline?: boolean; error?: string }> {

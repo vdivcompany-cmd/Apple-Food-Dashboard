@@ -70,8 +70,23 @@ export const API_ENDPOINTS = {
   },
   coupons: {
     list: `${environment.apiUrl}/coupons`,
+    create: `${environment.apiUrl}/coupons`,
+    update: (id: string) => `${environment.apiUrl}/coupons/${id}`,
+    delete: (id: string) => `${environment.apiUrl}/coupons/${id}`,
+    validate: `${environment.apiUrl}/coupons/validate`,
+  },
+  tenants: {
+    me: `${environment.apiUrl}/tenants/me`,
+    profile: `${environment.apiUrl}/tenants/profile`,
+    updateProfile: `${environment.apiUrl}/tenants/profile`,
+    updateSettings: `${environment.apiUrl}/tenants/settings`,
+  },
+  feedback: {
+    list: `${environment.apiUrl}/feedback`,
+    create: `${environment.apiUrl}/feedback`,
   },
   notifications: {
     list: `${environment.apiUrl}/notifications`,
+    dispatch: `${environment.apiUrl}/notifications/dispatch`,
   },
 };

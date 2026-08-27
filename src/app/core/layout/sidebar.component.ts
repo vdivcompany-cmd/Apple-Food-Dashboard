@@ -1,10 +1,11 @@
-import { AppIconComponent } from '../../shared/components/app-icon/app-icon.component';
 import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../auth/auth.service';
 import { LanguageService } from '../i18n/language.service';
 import { NAV_ITEMS, NavItem } from './nav-config';
+import { AppIconComponent } from '../../shared/components/app-icon/app-icon.component';
+import { OrdersService } from '../../features/orders/orders.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -70,10 +71,13 @@ import { NAV_ITEMS, NavItem } from './nav-config';
               [title]="isCollapsed() ? (isArabic() ? item.labelAr : item.label) : ''"
             >
               @if (isCollapsed()) {
-                <div class="flex items-center justify-center w-full h-full px-4 py-0.5">
+                <div class="flex items-center justify-center w-full h-full px-4 py-0.5 relative">
                   <app-icon [name]="item.iconName" customClass="w-5 h-5 flex-shrink-0"></app-icon>
-                  @if (item.badge) {
-                    <span class="absolute top-1 right-2 w-1.5 h-1.5 rounded-full bg-primary"></span>
+                  @if (getItemBadge(item)) {
+                    <span
+                      class="absolute top-1 right-2 w-2 h-2 rounded-full"
+                      [ngClass]="getItemBadgeVariant(item) === 'warning' ? 'bg-amber-500 animate-pulse' : 'bg-primary'"
+                    ></span>
                   }
                 </div>
               } @else {
@@ -81,12 +85,12 @@ import { NAV_ITEMS, NavItem } from './nav-config';
                 <span class="truncate flex-1 font-medium">
                   {{ isArabic() ? item.labelAr : item.label }}
                 </span>
-                @if (item.badge) {
+                @if (getItemBadge(item); as badge) {
                   <span
-                    class="text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider"
-                    [ngClass]="getBadgeClass(item.badgeVariant)"
+                    class="text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider transition-all"
+                    [ngClass]="getBadgeClass(getItemBadgeVariant(item))"
                   >
-                    {{ item.badge }}
+                    {{ badge }}
                   </span>
                 }
               }
@@ -179,12 +183,14 @@ import { NAV_ITEMS, NavItem } from './nav-config';
 
       <!-- ── Bottom: User Role Pill & Logout Button ────────── -->
       @if (!isCollapsed()) {
-        <div class="border-t border-border p-3 shrink-0 space-y-2">
-          <!-- Active role indicator pill -->
-          <div class="px-3 py-2 rounded-xl bg-surface border border-border flex items-center justify-between shadow-sm">
-            <div class="flex items-center gap-2 overflow-hidden">
+        <div class="p-3 border-t border-border flex flex-col gap-2 shrink-0 bg-surface-container">
+          <!-- Role pill card -->
+          <div class="px-3 py-2 rounded-xl bg-surface border border-border flex items-center justify-between shadow-xs">
+            <div class="flex items-center gap-2 min-w-0">
               <span class="w-2 h-2 rounded-full flex-shrink-0" [ngClass]="roleIndicatorClass()"></span>
-              <span class="text-xs font-semibold text-text-primary truncate">{{ currentRoleName() }}</span>
+              <div class="truncate text-xs font-semibold text-text-primary">
+                {{ currentRoleName() }}
+              </div>
             </div>
             <span
               class="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider flex-shrink-0"
@@ -235,6 +241,7 @@ import { NAV_ITEMS, NavItem } from './nav-config';
 export class SidebarComponent {
   private readonly authService = inject(AuthService);
   private readonly langService = inject(LanguageService);
+  readonly ordersService = inject(OrdersService);
 
   readonly isCollapsed = signal<boolean>(false);
   readonly userRole = this.authService.userRole;
@@ -277,6 +284,24 @@ export class SidebarComponent {
       default:        return 'Staff Member';
     }
   });
+
+  getItemBadge(item: NavItem): string | undefined {
+    if (item.id === 'orders') {
+      const pending = this.ordersService.pendingOrders().length;
+      if (pending > 0) return `${pending} New`;
+      return 'Live';
+    }
+    return item.badge;
+  }
+
+  getItemBadgeVariant(item: NavItem): 'primary' | 'success' | 'warning' | 'danger' | undefined {
+    if (item.id === 'orders') {
+      const pending = this.ordersService.pendingOrders().length;
+      if (pending > 0) return 'warning';
+      return 'success';
+    }
+    return item.badgeVariant;
+  }
 
   toggleCollapse(): void {
     this.isCollapsed.update((v) => !v);
