@@ -57,10 +57,12 @@ export interface BackendOrder {
   deliveryAddress?: string;
   status: BackendOrderStatus;
   items: BackendOrderItem[];
+  customerId?: string;
   subtotal: number;
   taxAmount?: number;
   discountAmount?: number;
   totalAmount: number;
+  total?: number;
   couponCode?: string;
   cashierConfirmation?: {
     confirmedBy?: string;

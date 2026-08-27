@@ -1,8 +1,9 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ReservationsService } from './reservations.service';
+import { ReservationsService, isValidEgyptianPhone, formatEgyptianPhoneForBackend } from './reservations.service';
 import { Reservation, ReservationStatus } from '../../shared/models/reservation.model';
+import { RestaurantTable } from '../../shared/models/table.model';
 import { AppIconComponent } from '../../shared/components/app-icon/app-icon.component';
 
 @Component({
@@ -12,7 +13,7 @@ import { AppIconComponent } from '../../shared/components/app-icon/app-icon.comp
   template: `
     <div class="space-y-6 select-none animate-[fadeIn_0.3s_ease-out]">
       
-      <!-- ── TOP ACTION BAR (Stitch Layout) ───────────────── -->
+      <!-- ── TOP ACTION BAR ───────────────────────────────── -->
       <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-surface p-4 rounded-2xl border border-border shadow-xs">
         <div class="flex flex-wrap items-center gap-3">
           <div>
@@ -20,7 +21,7 @@ import { AppIconComponent } from '../../shared/components/app-icon/app-icon.comp
               Reservations Board
             </h1>
             <p class="text-xs text-text-muted mt-0.5">
-              Guest bookings, timeline seating schedule, and VIP table assignments
+              Live dining reservations synced with floor plan tables & seating capacities
             </p>
           </div>
 
@@ -95,300 +96,365 @@ import { AppIconComponent } from '../../shared/components/app-icon/app-icon.comp
           <!-- Timeline Header Row -->
           <div class="grid grid-cols-5 bg-surface-container/80 border-b border-border p-3 text-xs font-extrabold text-text-primary sticky top-0 z-20">
             <div class="text-text-muted uppercase text-[10px] tracking-wider">Time Slot</div>
-            <div class="text-center">Main Floor</div>
+            <div class="text-center">Main Dining</div>
             <div class="text-center">Patio</div>
             <div class="text-center">Bar</div>
-            <div class="text-center">VIP Room</div>
+            <div class="text-center">VIP Lounge</div>
           </div>
 
-          <!-- Timeline Time Slot Rows -->
-          <div class="flex-1 overflow-y-auto divide-y divide-border/60 relative">
-            
-            @if (reservationsService.isLoading()) {
-              <div class="py-20 flex flex-col items-center justify-center text-text-muted">
-                <app-icon name="refresh-cw" customClass="w-7 h-7 animate-spin text-primary mb-2"></app-icon>
-                <span class="text-xs font-bold">Loading reservations schedule...</span>
-              </div>
-            } @else {
-              @for (slot of timeSlots; track slot) {
-                <div class="grid grid-cols-5 min-h-[76px] hover:bg-surface-container/30 transition relative group">
-                  
-                  <!-- Slot Time Label -->
-                  <div class="p-3 bg-surface-container-low/40 border-r border-border flex items-center justify-center text-xs font-black text-text-muted group-hover:text-primary transition">
-                    {{ slot }}
-                  </div>
-
-                  <!-- Zone 1: Main Floor -->
-                  <div class="p-1.5 border-r border-border relative">
-                    @for (res of getReservationsForSlotAndZone(slot, 'Main Floor'); track res.id || res._id) {
-                      <div
-                        (click)="selectBooking(res)"
-                        class="p-2 rounded-xl border transition cursor-pointer text-xs flex flex-col justify-between shadow-xs mb-1 hover:scale-[1.02]"
-                        [ngClass]="getBookingBadgeClasses(res.status)"
-                      >
-                        <div class="flex items-center justify-between font-bold">
-                          <span class="truncate">{{ res.customerName }}</span>
-                          <span class="text-[10px] opacity-80">{{ res.guestsCount }}p</span>
-                        </div>
-                        <div class="text-[10px] text-text-muted flex items-center gap-1 mt-0.5">
-                          <span>{{ res.tableNumber || 'T-01' }}</span>
-                          @if (res.occasion) {
-                            <span>• {{ res.occasion }}</span>
-                          }
-                        </div>
-                      </div>
-                    }
-                  </div>
-
-                  <!-- Zone 2: Patio -->
-                  <div class="p-1.5 border-r border-border relative">
-                    @for (res of getReservationsForSlotAndZone(slot, 'Patio'); track res.id || res._id) {
-                      <div
-                        (click)="selectBooking(res)"
-                        class="p-2 rounded-xl border transition cursor-pointer text-xs flex flex-col justify-between shadow-xs mb-1 hover:scale-[1.02]"
-                        [ngClass]="getBookingBadgeClasses(res.status)"
-                      >
-                        <div class="flex items-center justify-between font-bold">
-                          <span class="truncate">{{ res.customerName }}</span>
-                          <span class="text-[10px] opacity-80">{{ res.guestsCount }}p</span>
-                        </div>
-                        <div class="text-[10px] text-text-muted flex items-center gap-1 mt-0.5">
-                          <span>{{ res.tableNumber || 'P-01' }}</span>
-                        </div>
-                      </div>
-                    }
-                  </div>
-
-                  <!-- Zone 3: Bar -->
-                  <div class="p-1.5 border-r border-border relative">
-                    @for (res of getReservationsForSlotAndZone(slot, 'Bar'); track res.id || res._id) {
-                      <div
-                        (click)="selectBooking(res)"
-                        class="p-2 rounded-xl border transition cursor-pointer text-xs flex flex-col justify-between shadow-xs mb-1 hover:scale-[1.02]"
-                        [ngClass]="getBookingBadgeClasses(res.status)"
-                      >
-                        <div class="flex items-center justify-between font-bold">
-                          <span class="truncate">{{ res.customerName }}</span>
-                          <span class="text-[10px] opacity-80">{{ res.guestsCount }}p</span>
-                        </div>
-                        <div class="text-[10px] text-text-muted flex items-center gap-1 mt-0.5">
-                          <span>{{ res.tableNumber || 'B-01' }}</span>
-                        </div>
-                      </div>
-                    }
-                  </div>
-
-                  <!-- Zone 4: VIP Lounge -->
-                  <div class="p-1.5 relative">
-                    @for (res of getReservationsForSlotAndZone(slot, 'VIP Room'); track res.id || res._id) {
-                      <div
-                        (click)="selectBooking(res)"
-                        class="p-2 rounded-xl border transition cursor-pointer text-xs flex flex-col justify-between shadow-xs mb-1 hover:scale-[1.02]"
-                        [ngClass]="getBookingBadgeClasses(res.status)"
-                      >
-                        <div class="flex items-center justify-between font-bold">
-                          <span class="truncate">{{ res.customerName }}</span>
-                          <span class="text-[10px] opacity-80">{{ res.guestsCount }}p</span>
-                        </div>
-                        <div class="text-[10px] text-text-muted flex items-center gap-1 mt-0.5">
-                          <span>{{ res.tableNumber || 'VIP-1' }}</span>
-                          @if (res.occasion) {
-                            <span>• {{ res.occasion }}</span>
-                          }
-                        </div>
-                      </div>
-                    }
-                  </div>
-
+          <!-- Timeline Time Grid -->
+          <div class="divide-y divide-border overflow-y-auto max-h-[700px]">
+            @for (slot of timeSlots; track slot) {
+              <div class="grid grid-cols-5 min-h-[72px] hover:bg-surface-hover/50 transition">
+                
+                <!-- Time Column -->
+                <div class="p-3 border-r border-border flex items-center justify-center bg-surface-container/30">
+                  <span class="text-xs font-black text-text-muted">{{ slot }}</span>
                 </div>
-              }
-            }
 
+                <!-- Zone: Main Dining -->
+                <div class="p-1.5 border-r border-border flex flex-col justify-center gap-1 min-h-[64px]">
+                  @for (booking of getReservationsForSlotAndZone(slot, 'Main Dining'); track booking._id || booking.id) {
+                    <div
+                      (click)="selectBooking(booking)"
+                      [ngClass]="getBookingBadgeClasses(booking.status)"
+                      class="p-2 rounded-xl border text-[11px] font-bold transition shadow-xs cursor-pointer"
+                    >
+                      <div class="flex items-center justify-between">
+                        <span class="truncate font-black">{{ booking.customerName }}</span>
+                        <span class="text-[9px] px-1.5 py-0.2 rounded-full font-extrabold uppercase">
+                          {{ booking.guestsCount }}p
+                        </span>
+                      </div>
+                      <div class="text-[9px] text-text-muted flex items-center justify-between mt-0.5">
+                        <span>{{ booking.tableNumber }}</span>
+                        <span class="capitalize">{{ booking.status }}</span>
+                      </div>
+                    </div>
+                  }
+                </div>
+
+                <!-- Zone: Patio -->
+                <div class="p-1.5 border-r border-border flex flex-col justify-center gap-1 min-h-[64px]">
+                  @for (booking of getReservationsForSlotAndZone(slot, 'Patio'); track booking._id || booking.id) {
+                    <div
+                      (click)="selectBooking(booking)"
+                      [ngClass]="getBookingBadgeClasses(booking.status)"
+                      class="p-2 rounded-xl border text-[11px] font-bold transition shadow-xs cursor-pointer"
+                    >
+                      <div class="flex items-center justify-between">
+                        <span class="truncate font-black">{{ booking.customerName }}</span>
+                        <span class="text-[9px] px-1.5 py-0.2 rounded-full font-extrabold uppercase">
+                          {{ booking.guestsCount }}p
+                        </span>
+                      </div>
+                      <div class="text-[9px] text-text-muted flex items-center justify-between mt-0.5">
+                        <span>{{ booking.tableNumber }}</span>
+                        <span class="capitalize">{{ booking.status }}</span>
+                      </div>
+                    </div>
+                  }
+                </div>
+
+                <!-- Zone: Bar -->
+                <div class="p-1.5 border-r border-border flex flex-col justify-center gap-1 min-h-[64px]">
+                  @for (booking of getReservationsForSlotAndZone(slot, 'Bar'); track booking._id || booking.id) {
+                    <div
+                      (click)="selectBooking(booking)"
+                      [ngClass]="getBookingBadgeClasses(booking.status)"
+                      class="p-2 rounded-xl border text-[11px] font-bold transition shadow-xs cursor-pointer"
+                    >
+                      <div class="flex items-center justify-between">
+                        <span class="truncate font-black">{{ booking.customerName }}</span>
+                        <span class="text-[9px] px-1.5 py-0.2 rounded-full font-extrabold uppercase">
+                          {{ booking.guestsCount }}p
+                        </span>
+                      </div>
+                      <div class="text-[9px] text-text-muted flex items-center justify-between mt-0.5">
+                        <span>{{ booking.tableNumber }}</span>
+                        <span class="capitalize">{{ booking.status }}</span>
+                      </div>
+                    </div>
+                  }
+                </div>
+
+                <!-- Zone: VIP Lounge -->
+                <div class="p-1.5 flex flex-col justify-center gap-1 min-h-[64px]">
+                  @for (booking of getReservationsForSlotAndZone(slot, 'VIP Lounge'); track booking._id || booking.id) {
+                    <div
+                      (click)="selectBooking(booking)"
+                      [ngClass]="getBookingBadgeClasses(booking.status)"
+                      class="p-2 rounded-xl border text-[11px] font-bold transition shadow-xs cursor-pointer"
+                    >
+                      <div class="flex items-center justify-between">
+                        <span class="truncate font-black">{{ booking.customerName }}</span>
+                        <span class="text-[9px] px-1.5 py-0.2 rounded-full font-extrabold uppercase">
+                          {{ booking.guestsCount }}p
+                        </span>
+                      </div>
+                      <div class="text-[9px] text-text-muted flex items-center justify-between mt-0.5">
+                        <span>{{ booking.tableNumber }}</span>
+                        <span class="capitalize">{{ booking.status }}</span>
+                      </div>
+                    </div>
+                  }
+                </div>
+
+              </div>
+            }
           </div>
+
         </div>
 
-        <!-- ── 2. RIGHT: TODAY'S BOOKINGS FEED (xl:col-span-4) ─ -->
+        <!-- ── 2. RIGHT: BOOKINGS FEED (xl:col-span-4) ──────── -->
         <div class="xl:col-span-4 bg-surface rounded-2xl border border-border shadow-card p-5 flex flex-col justify-between">
-          <div>
-            <div class="flex items-center justify-between mb-4">
+          
+          <div class="space-y-4">
+            <!-- Header -->
+            <div class="flex items-center justify-between pb-3 border-b border-border">
               <div>
-                <h3 class="text-sm font-extrabold text-text-primary">Guest Bookings</h3>
-                <p class="text-xs text-text-muted">Live upcoming guest schedule</p>
+                <h3 class="text-base font-extrabold text-text-primary">
+                  Bookings Schedule
+                </h3>
+                <span class="text-xs text-text-muted">
+                  {{ filteredBookings().length }} reservations on file
+                </span>
               </div>
-              <span class="px-2.5 py-1 rounded-xl bg-primary/10 text-primary text-xs font-bold border border-primary/20">
-                {{ filteredBookings().length }} Guests
+              <span class="text-xs font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-xl">
+                {{ selectedDateFilter() | uppercase }}
               </span>
             </div>
 
-            <!-- Booking Cards Feed -->
-            <div class="space-y-3 overflow-y-auto max-h-[520px] pr-1">
-              @if (filteredBookings().length === 0) {
-                <div class="text-center py-12 text-text-muted text-xs">
-                  <app-icon name="calendar" customClass="w-8 h-8 opacity-30 mx-auto mb-2"></app-icon>
-                  <p class="font-bold text-text-primary">No reservations found</p>
-                  <p class="text-[11px] text-text-muted mt-0.5">Click "+ New Reservation" to schedule a booking.</p>
-                </div>
-              } @else {
-                @for (booking of filteredBookings(); track booking.id || booking._id) {
-                  <div
-                    class="p-4 rounded-xl bg-surface-container/60 hover:bg-surface-container border border-border transition flex flex-col gap-3 group"
-                  >
+            <!-- Loading State -->
+            @if (reservationsService.isLoading()) {
+              <div class="p-12 flex flex-col items-center justify-center gap-2 text-text-muted">
+                <app-icon name="refresh-cw" customClass="w-6 h-6 text-primary animate-spin"></app-icon>
+                <span class="text-xs font-bold">Syncing reservations with backend...</span>
+              </div>
+            } @else if (filteredBookings().length === 0) {
+              <!-- Empty State -->
+              <div class="p-8 text-center bg-surface-container/40 rounded-2xl border border-dashed border-border space-y-2">
+                <app-icon name="calendar" customClass="w-8 h-8 text-text-muted mx-auto"></app-icon>
+                <h4 class="text-xs font-extrabold text-text-primary">No Bookings Found</h4>
+                <p class="text-[11px] text-text-muted">No reservations scheduled for this date filter.</p>
+                <button
+                  type="button"
+                  (click)="openNewBookingDrawer()"
+                  class="mt-2 px-3 py-1.5 bg-primary text-white rounded-xl text-xs font-bold hover:opacity-90 transition cursor-pointer"
+                >
+                  + Add Booking
+                </button>
+              </div>
+            } @else {
+              <!-- Bookings List -->
+              <div class="space-y-3 overflow-y-auto max-h-[580px] pr-1">
+                @for (res of filteredBookings(); track res._id || res.id) {
+                  <div class="p-4 bg-surface-container rounded-2xl border border-border space-y-3 hover:border-primary/40 transition">
+                    
                     <div class="flex items-start justify-between">
                       <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 text-primary flex items-center justify-center font-extrabold text-xs">
-                          {{ getInitials(booking.customerName) }}
+                        <div class="w-10 h-10 rounded-xl bg-surface border border-border flex items-center justify-center font-black text-xs text-text-primary shadow-xs">
+                          {{ getInitials(res.customerName) }}
                         </div>
                         <div>
-                          <h4 class="text-xs font-extrabold text-text-primary">{{ booking.customerName }}</h4>
-                          <div class="text-[11px] text-text-muted flex items-center gap-1.5 mt-0.5">
-                            <app-icon name="phone" customClass="w-3 h-3 text-text-muted"></app-icon>
-                            <span>{{ booking.customerPhone }}</span>
-                          </div>
+                          <h4 class="text-xs font-extrabold text-text-primary">{{ res.customerName }}</h4>
+                          <span class="text-[11px] text-text-muted">{{ res.customerPhone }}</span>
                         </div>
                       </div>
-
                       <span
                         class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase border"
-                        [ngClass]="getStatusPillClasses(booking.status)"
+                        [ngClass]="getStatusPillClasses(res.status)"
                       >
-                        {{ booking.status }}
+                        {{ res.status }}
                       </span>
                     </div>
 
-                    <div class="grid grid-cols-3 gap-2 text-[11px] bg-surface p-2.5 rounded-xl border border-border">
-                      <div>
-                        <span class="text-[10px] text-text-muted block">Time</span>
-                        <strong class="text-text-primary">{{ booking.time }}</strong>
+                    <!-- Meta Tags -->
+                    <div class="grid grid-cols-2 gap-2 text-[11px] font-bold text-text-muted pt-2 border-t border-border/60">
+                      <div class="flex items-center gap-1.5">
+                        <app-icon name="clock" customClass="w-3.5 h-3.5 text-primary"></app-icon>
+                        <span class="text-text-primary">{{ res.time }} - {{ res.endTime }}</span>
                       </div>
-                      <div>
-                        <span class="text-[10px] text-text-muted block">Party Size</span>
-                        <strong class="text-text-primary">{{ booking.guestsCount }} Guests</strong>
+                      <div class="flex items-center gap-1.5">
+                        <app-icon name="users" customClass="w-3.5 h-3.5 text-blue-500"></app-icon>
+                        <span class="text-text-primary">{{ res.guestsCount }} Guests</span>
                       </div>
-                      <div>
-                        <span class="text-[10px] text-text-muted block">Table</span>
-                        <strong class="text-primary">{{ booking.tableNumber || 'Assigned' }}</strong>
+                      <div class="flex items-center gap-1.5">
+                        <app-icon name="map-pin" customClass="w-3.5 h-3.5 text-amber-500"></app-icon>
+                        <span class="text-text-primary">{{ res.section }}</span>
+                      </div>
+                      <div class="flex items-center gap-1.5">
+                        <app-icon name="sparkles" customClass="w-3.5 h-3.5 text-purple-500"></app-icon>
+                        <span class="text-text-primary">{{ res.tableNumber || 'Table Assigned' }}</span>
                       </div>
                     </div>
 
-                    <!-- Quick Status Actions -->
-                    <div class="flex items-center justify-end gap-2 pt-1 border-t border-border/50">
-                      @if (booking.status === 'pending' || booking.status === 'PENDING') {
+                    @if (res.notes || res.occasion || res.specialRequests) {
+                      <div class="p-2 bg-surface rounded-xl border border-border text-[10px] text-text-secondary font-medium italic">
+                        "{{ res.notes || res.occasion || res.specialRequests }}"
+                      </div>
+                    }
+
+                    <!-- Actions -->
+                    <div class="flex items-center gap-2 pt-2 border-t border-border/60">
+                      @if (res.status === 'pending' || res.status === 'PENDING') {
                         <button
                           type="button"
-                          (click)="changeStatus(booking, 'confirmed')"
-                          class="px-3 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-lg text-[11px] font-bold border border-emerald-500/20 transition cursor-pointer"
+                          (click)="changeStatus(res, 'confirmed')"
+                          class="flex-1 py-1.5 bg-emerald-500 text-white rounded-xl text-[11px] font-extrabold hover:bg-emerald-600 transition cursor-pointer"
                         >
                           Confirm
                         </button>
                       }
-                      @if (booking.status === 'confirmed' || booking.status === 'CONFIRMED') {
+                      @if (res.status !== 'seated' && res.status !== 'SEATED' && res.status !== 'cancelled' && res.status !== 'CANCELLED') {
                         <button
                           type="button"
-                          (click)="changeStatus(booking, 'seated')"
-                          class="px-3 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-lg text-[11px] font-bold border border-amber-500/20 transition cursor-pointer"
+                          (click)="changeStatus(res, 'seated')"
+                          class="flex-1 py-1.5 bg-amber-500 text-white rounded-xl text-[11px] font-extrabold hover:bg-amber-600 transition cursor-pointer"
                         >
                           Seat Guests
                         </button>
                       }
-                      @if (booking.status !== 'cancelled' && booking.status !== 'CANCELLED') {
+                      @if (res.status !== 'cancelled' && res.status !== 'CANCELLED') {
                         <button
                           type="button"
-                          (click)="changeStatus(booking, 'cancelled')"
-                          class="px-2.5 py-1 text-text-muted hover:text-red-500 rounded-lg text-[11px] font-bold transition cursor-pointer"
+                          (click)="changeStatus(res, 'cancelled')"
+                          class="px-3 py-1.5 bg-surface hover:bg-red-500/10 text-red-500 rounded-xl text-[11px] font-bold border border-border hover:border-red-500/20 transition cursor-pointer"
                         >
                           Cancel
                         </button>
                       }
+                      <button
+                        type="button"
+                        (click)="deleteBooking(res)"
+                        class="p-1.5 text-text-muted hover:text-red-500 hover:bg-surface rounded-xl transition cursor-pointer"
+                        title="Delete booking"
+                      >
+                        <app-icon name="trash-2" customClass="w-3.5 h-3.5"></app-icon>
+                      </button>
                     </div>
 
                   </div>
                 }
-              }
-            </div>
+              </div>
+            }
+
           </div>
 
-          <div class="pt-3 border-t border-border mt-3 text-center text-xs text-text-muted font-medium">
-            Auto-synced with online table reservations
-          </div>
         </div>
 
       </div>
 
-      <!-- ── NEW RESERVATION SLIDE-IN DRAWER ────────────────── -->
+      <!-- ── SLIDE-IN NEW BOOKING DRAWER ───────────────────── -->
       @if (showDrawer()) {
         <div class="fixed inset-0 z-50 overflow-hidden">
           <div (click)="showDrawer.set(false)" class="absolute inset-0 bg-black/60 backdrop-blur-xs animate-fade-in"></div>
 
           <div class="absolute inset-y-0 right-0 max-w-full flex pl-10">
-            <div class="w-screen max-w-md bg-surface border-l border-border shadow-2xl flex flex-col justify-between animate-slide-in">
+            <div class="w-screen max-w-md bg-surface border-l border-border shadow-2xl flex flex-col animate-slide-in-right">
               
               <!-- Drawer Header -->
               <div class="p-6 border-b border-border flex items-center justify-between bg-surface-container/50">
                 <div>
-                  <h3 class="text-base font-extrabold text-text-primary">
-                    Create Guest Reservation
-                  </h3>
-                  <p class="text-xs text-text-muted mt-0.5">
-                    Record guest contact, party size &amp; table assignment
-                  </p>
+                  <h3 class="text-base font-extrabold text-text-primary">Create Reservation</h3>
+                  <p class="text-xs text-text-muted">Register dining booking with Egyptian phone & capacity validation</p>
                 </div>
                 <button
                   type="button"
                   (click)="showDrawer.set(false)"
-                  class="p-2 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface transition cursor-pointer"
+                  class="p-2 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-container transition cursor-pointer"
                 >
-                  <app-icon name="x" customClass="w-4 h-4"></app-icon>
+                  <app-icon name="x" customClass="w-5 h-5"></app-icon>
                 </button>
               </div>
 
-              <!-- Drawer Form -->
-              <div class="flex-1 overflow-y-auto p-6 space-y-4 text-xs">
+              <!-- Drawer Form Body -->
+              <div class="p-6 space-y-4 flex-1 overflow-y-auto text-xs">
                 
+                <!-- Guest Name -->
                 <div>
                   <label class="block font-bold text-text-primary mb-1">Guest Full Name *</label>
                   <input
                     type="text"
-                    [(ngModel)]="formData.customerName"
-                    placeholder="e.g. Dr. Sherif Mansour"
+                    [ngModel]="customerName()"
+                    (ngModelChange)="customerName.set($event)"
+                    placeholder="e.g. Tarek Nour"
                     class="w-full px-3.5 py-2.5 bg-surface-container border border-border rounded-xl text-text-primary font-semibold focus:outline-none focus:border-primary transition"
                   />
                 </div>
 
-                <div class="grid grid-cols-2 gap-3">
-                  <div>
-                    <label class="block font-bold text-text-primary mb-1">Phone Number *</label>
+                <!-- Egyptian Phone Number Input with Real-time Validation -->
+                <div>
+                  <div class="flex items-center justify-between mb-1">
+                    <label class="block font-bold text-text-primary">Egyptian Phone Number *</label>
+                    <span class="text-[10px] text-text-muted font-medium">Egypt (+20 / 01x)</span>
+                  </div>
+                  <div class="relative">
                     <input
                       type="tel"
-                      [(ngModel)]="formData.customerPhone"
-                      placeholder="+20 100 000 0000"
-                      class="w-full px-3.5 py-2.5 bg-surface-container border border-border rounded-xl text-text-primary font-semibold focus:outline-none focus:border-primary transition"
+                      [ngModel]="customerPhone()"
+                      (ngModelChange)="customerPhone.set($event)"
+                      placeholder="01012345678"
+                      [ngClass]="phoneEntered() && !isPhoneValid() ? 'border-red-500 focus:border-red-500 bg-red-500/5' : 'border-border focus:border-primary bg-surface-container'"
+                      class="w-full px-3.5 py-2.5 border rounded-xl text-text-primary font-semibold focus:outline-none transition"
                     />
+                    @if (phoneEntered() && isPhoneValid()) {
+                      <app-icon name="check-circle" customClass="w-4 h-4 text-emerald-500 absolute right-3 top-1/2 -translate-y-1/2"></app-icon>
+                    }
                   </div>
+                  
+                  @if (phoneEntered() && !isPhoneValid()) {
+                    <p class="text-[11px] text-red-500 font-bold mt-1.5 flex items-center gap-1 animate-fade-in">
+                      <app-icon name="alert-triangle" customClass="w-3.5 h-3.5 shrink-0"></app-icon>
+                      <span>Please enter a valid 11-digit Egyptian mobile number (010, 011, 012, 015).</span>
+                    </p>
+                  }
+                </div>
+
+                <!-- Dining Table Selection -->
+                <div>
+                  <div class="flex items-center justify-between mb-1">
+                    <label class="block font-bold text-text-primary">Assigned Dining Table</label>
+                    @if (selectedTable()) {
+                      <span class="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-md">
+                        Max Capacity: {{ selectedTable()?.capacity }} Guests
+                      </span>
+                    }
+                  </div>
+                  <select
+                    [ngModel]="selectedTableId()"
+                    (ngModelChange)="onTableSelect($event)"
+                    class="w-full px-3.5 py-2.5 bg-surface-container border border-border rounded-xl text-text-primary font-bold focus:outline-none focus:border-primary transition cursor-pointer"
+                  >
+                    <option value="">Auto-assign / Any Table</option>
+                    @for (t of reservationsService.tables(); track t._id || t.id) {
+                      <option [value]="t._id || t.id">
+                        Table {{ t.tableNumber }} • Capacity: {{ t.capacity }} Guests ({{ t.section || 'Main Dining' }})
+                      </option>
+                    }
+                  </select>
+                </div>
+
+                <!-- Party Size (Guests) with Capacity Warning -->
+                <div class="grid grid-cols-2 gap-3">
                   <div>
                     <label class="block font-bold text-text-primary mb-1">Party Size (Guests) *</label>
                     <input
                       type="number"
-                      [(ngModel)]="formData.guestsCount"
+                      [ngModel]="guestsCount()"
+                      (ngModelChange)="guestsCount.set(+$event)"
                       min="1"
-                      max="30"
-                      class="w-full px-3.5 py-2.5 bg-surface-container border border-border rounded-xl text-text-primary font-bold focus:outline-none focus:border-primary transition"
+                      [max]="selectedTable()?.capacity || 20"
+                      [ngClass]="isOverCapacity() ? 'border-red-500 focus:border-red-500 bg-red-500/5' : 'border-border focus:border-primary bg-surface-container'"
+                      class="w-full px-3.5 py-2.5 border rounded-xl text-text-primary font-bold focus:outline-none transition"
                     />
                   </div>
-                </div>
 
-                <div class="grid grid-cols-2 gap-3">
-                  <div>
-                    <label class="block font-bold text-text-primary mb-1">Date *</label>
-                    <input
-                      type="date"
-                      [(ngModel)]="formData.date"
-                      class="w-full px-3.5 py-2.5 bg-surface-container border border-border rounded-xl text-text-primary font-semibold focus:outline-none focus:border-primary transition cursor-pointer"
-                    />
-                  </div>
                   <div>
                     <label class="block font-bold text-text-primary mb-1">Time Slot *</label>
                     <select
-                      [(ngModel)]="formData.time"
+                      [ngModel]="reservationTime()"
+                      (ngModelChange)="reservationTime.set($event)"
                       class="w-full px-3.5 py-2.5 bg-surface-container border border-border rounded-xl text-text-primary font-semibold focus:outline-none focus:border-primary transition cursor-pointer"
                     >
                       @for (slot of timeSlots; track slot) {
@@ -398,48 +464,38 @@ import { AppIconComponent } from '../../shared/components/app-icon/app-icon.comp
                   </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3">
-                  <div>
-                    <label class="block font-bold text-text-primary mb-1">Section / Zone</label>
-                    <select
-                      [(ngModel)]="formData.section"
-                      class="w-full px-3.5 py-2.5 bg-surface-container border border-border rounded-xl text-text-primary font-semibold focus:outline-none focus:border-primary transition cursor-pointer"
-                    >
-                      <option value="Main Floor">Main Floor</option>
-                      <option value="Patio">Patio</option>
-                      <option value="Bar">Bar</option>
-                      <option value="VIP Room">VIP Room</option>
-                    </select>
+                <!-- Over-Capacity Warning Banner -->
+                @if (isOverCapacity()) {
+                  <div class="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 space-y-1 animate-shake">
+                    <div class="flex items-center gap-1.5 font-extrabold text-[11px]">
+                      <app-icon name="alert-triangle" customClass="w-4 h-4 text-red-500 shrink-0"></app-icon>
+                      <span>Table Capacity Exceeded!</span>
+                    </div>
+                    <p class="text-[10px] leading-relaxed">
+                      Table {{ selectedTable()?.tableNumber }} can only seat up to <strong>{{ selectedTable()?.capacity }} guests</strong>, but <strong>{{ guestsCount() }} guests</strong> were requested. Please select a larger table or reduce party size.
+                    </p>
                   </div>
-                  <div>
-                    <label class="block font-bold text-text-primary mb-1">Assigned Table</label>
-                    <input
-                      type="text"
-                      [(ngModel)]="formData.tableNumber"
-                      placeholder="e.g. Table #04"
-                      class="w-full px-3.5 py-2.5 bg-surface-container border border-border rounded-xl text-text-primary font-semibold focus:outline-none focus:border-primary transition"
-                    />
-                  </div>
+                }
+
+                <div>
+                  <label class="block font-bold text-text-primary mb-1">Reservation Date *</label>
+                  <input
+                    type="date"
+                    [ngModel]="reservationDate()"
+                    (ngModelChange)="reservationDate.set($event)"
+                    class="w-full px-3.5 py-2.5 bg-surface-container border border-border rounded-xl text-text-primary font-semibold focus:outline-none focus:border-primary transition cursor-pointer"
+                  />
                 </div>
 
                 <div>
                   <label class="block font-bold text-text-primary mb-1">Occasion / VIP Notes</label>
                   <input
                     type="text"
-                    [(ngModel)]="formData.occasion"
-                    placeholder="e.g. Anniversary Dinner, Birthday, High Priority Guest"
+                    [ngModel]="notes()"
+                    (ngModelChange)="notes.set($event)"
+                    placeholder="e.g. Anniversary Dinner, Birthday celebration, Quiet booth"
                     class="w-full px-3.5 py-2.5 bg-surface-container border border-border rounded-xl text-text-primary focus:outline-none focus:border-primary transition"
                   />
-                </div>
-
-                <div>
-                  <label class="block font-bold text-text-primary mb-1">Special Dietary / Seating Requests</label>
-                  <textarea
-                    [(ngModel)]="formData.specialRequests"
-                    rows="2"
-                    placeholder="High chair needed, quiet booth preferred..."
-                    class="w-full px-3.5 py-2.5 bg-surface-container border border-border rounded-xl text-text-primary focus:outline-none focus:border-primary transition"
-                  ></textarea>
                 </div>
 
               </div>
@@ -456,7 +512,7 @@ import { AppIconComponent } from '../../shared/components/app-icon/app-icon.comp
                 <button
                   type="button"
                   (click)="saveReservation()"
-                  [disabled]="reservationsService.isSaving() || !formData.customerName || !formData.customerPhone"
+                  [disabled]="isSubmitDisabled()"
                   class="flex-1 py-3 rounded-xl bg-primary text-white font-extrabold text-xs shadow-md hover:opacity-90 active:scale-95 transition disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   @if (reservationsService.isSaving()) {
@@ -479,26 +535,22 @@ import { AppIconComponent } from '../../shared/components/app-icon/app-icon.comp
 export default class ReservationsComponent implements OnInit {
   readonly reservationsService = inject(ReservationsService);
 
-  readonly selectedDateFilter = signal<'today' | 'tomorrow' | 'all'>('today');
+  readonly selectedDateFilter = signal<'today' | 'tomorrow' | 'all'>('all');
   readonly showDrawer = signal<boolean>(false);
+
+  // Pure Angular 22 Signals for full form reactivity
+  readonly customerName = signal<string>('');
+  readonly customerPhone = signal<string>('');
+  readonly guestsCount = signal<number>(2);
+  readonly reservationDate = signal<string>(new Date(Date.now() + 86400000).toISOString().slice(0, 10));
+  readonly reservationTime = signal<string>('19:30');
+  readonly selectedTableId = signal<string>('');
+  readonly notes = signal<string>('');
 
   readonly timeSlots = [
     '17:00', '17:30', '18:00', '18:30', '19:00', '19:30',
     '20:00', '20:30', '21:00', '21:30', '22:00', '22:30',
   ];
-
-  formData: Partial<Reservation> = {
-    customerName: '',
-    customerPhone: '',
-    guestsCount: 2,
-    date: new Date().toISOString().slice(0, 10),
-    time: '19:00',
-    section: 'Main Floor',
-    tableNumber: 'T-01',
-    occasion: '',
-    specialRequests: '',
-    status: 'confirmed',
-  };
 
   readonly filteredBookings = computed(() => {
     const list = this.reservationsService.reservations();
@@ -507,7 +559,7 @@ export default class ReservationsComponent implements OnInit {
     const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
 
     if (filter === 'today') {
-      return list.filter((r) => r.date?.startsWith(today) || !r.date);
+      return list.filter((r) => r.date?.startsWith(today));
     }
     if (filter === 'tomorrow') {
       return list.filter((r) => r.date?.startsWith(tomorrow));
@@ -515,14 +567,59 @@ export default class ReservationsComponent implements OnInit {
     return list;
   });
 
+  readonly selectedTable = computed(() => {
+    const id = this.selectedTableId();
+    if (!id) return null;
+    return this.reservationsService.tables().find((t) => (t._id || t.id) === id) || null;
+  });
+
+  readonly isOverCapacity = computed(() => {
+    const table = this.selectedTable();
+    if (!table || !table.capacity) return false;
+    const guests = Number(this.guestsCount()) || 1;
+    return guests > table.capacity;
+  });
+
+  readonly phoneEntered = computed(() => {
+    return this.customerPhone().trim().length > 0;
+  });
+
+  readonly isPhoneValid = computed(() => {
+    return isValidEgyptianPhone(this.customerPhone());
+  });
+
+  readonly isSubmitDisabled = computed(() => {
+    const isSaving = this.reservationsService.isSaving();
+    const name = this.customerName().trim();
+    const phone = this.customerPhone().trim();
+    const validPhone = this.isPhoneValid();
+    const overCap = this.isOverCapacity();
+
+    return isSaving || !name || !phone || !validPhone || overCap;
+  });
+
   ngOnInit(): void {
+    this.reservationsService.fetchTables();
     this.reservationsService.fetchReservations();
+  }
+
+  onTableSelect(tableId: string): void {
+    this.selectedTableId.set(tableId);
   }
 
   getReservationsForSlotAndZone(slot: string, zone: string): Reservation[] {
     return this.filteredBookings().filter((r) => {
       const slotMatch = (r.time || '').startsWith(slot) || (r.time || '').replace(':', '') === slot.replace(':', '');
-      const zoneMatch = (r.section || r.zone || 'Main Floor').toLowerCase().includes(zone.toLowerCase().replace('room', '').trim());
+      const rZone = (r.section || r.zone || 'Main Dining').toLowerCase();
+      const targetZone = zone.toLowerCase();
+      
+      const zoneMatch =
+        rZone === targetZone ||
+        (targetZone.includes('main') && rZone.includes('main')) ||
+        (targetZone.includes('patio') && rZone.includes('patio')) ||
+        (targetZone.includes('bar') && rZone.includes('bar')) ||
+        (targetZone.includes('vip') && rZone.includes('vip'));
+
       return slotMatch && zoneMatch;
     });
   }
@@ -563,29 +660,63 @@ export default class ReservationsComponent implements OnInit {
   }
 
   selectBooking(res: Reservation): void {
-    // Quick focus or action
+    // Selection focus
   }
 
   openNewBookingDrawer(): void {
-    this.formData = {
-      customerName: '',
-      customerPhone: '',
-      guestsCount: 2,
-      date: new Date().toISOString().slice(0, 10),
-      time: '19:00',
-      section: 'Main Floor',
-      tableNumber: 'T-01',
-      occasion: '',
-      specialRequests: '',
-      status: 'confirmed',
-    };
+    const tomorrowStr = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+    const tablesList = this.reservationsService.tables();
+
+    this.customerName.set('');
+    this.customerPhone.set('');
+    this.guestsCount.set(2);
+    this.reservationDate.set(tomorrowStr);
+    this.reservationTime.set('19:30');
+    this.notes.set('');
+
+    if (tablesList.length > 0) {
+      this.selectedTableId.set(tablesList[0]._id || tablesList[0].id || '');
+    } else {
+      this.selectedTableId.set('');
+    }
+
     this.showDrawer.set(true);
   }
 
   async saveReservation(): Promise<void> {
-    const ok = await this.reservationsService.createReservation(this.formData);
+    const name = this.customerName().trim();
+    const phone = this.customerPhone().trim();
+
+    if (!name || !phone) return;
+
+    if (!this.isPhoneValid()) {
+      alert('Please enter a valid Egyptian mobile phone number (e.g. 01012345678, 011..., 012..., 015...).');
+      return;
+    }
+
+    if (this.isOverCapacity()) {
+      const table = this.selectedTable();
+      alert(`Party size (${this.guestsCount()}) exceeds Table ${table?.tableNumber} maximum capacity of ${table?.capacity} guests.`);
+      return;
+    }
+
+    const payload: Partial<Reservation> = {
+      customerName: name,
+      customerPhone: phone,
+      guestsCount: Number(this.guestsCount()) || 2,
+      partySize: Number(this.guestsCount()) || 2,
+      date: this.reservationDate(),
+      time: this.reservationTime(),
+      tableId: this.selectedTableId() || undefined,
+      notes: this.notes().trim() || undefined,
+      status: 'confirmed',
+    };
+
+    const ok = await this.reservationsService.createReservation(payload);
     if (ok.success) {
       this.showDrawer.set(false);
+    } else if (ok.error) {
+      alert(ok.error);
     }
   }
 
@@ -593,6 +724,15 @@ export default class ReservationsComponent implements OnInit {
     const id = booking.id || booking._id;
     if (id) {
       await this.reservationsService.updateStatus(id, status);
+    }
+  }
+
+  async deleteBooking(booking: Reservation): Promise<void> {
+    const id = booking.id || booking._id;
+    if (!id) return;
+    const confirmed = confirm(`Are you sure you want to cancel booking for ${booking.customerName}?`);
+    if (confirmed) {
+      await this.reservationsService.deleteReservation(id);
     }
   }
 }

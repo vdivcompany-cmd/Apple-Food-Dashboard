@@ -41,19 +41,32 @@ export const API_ENDPOINTS = {
   },
   branches: {
     list: `${environment.apiUrl}/branches`,
+    detail: (id: string) => `${environment.apiUrl}/branches/${id}`,
+    create: `${environment.apiUrl}/branches`,
+    update: (id: string) => `${environment.apiUrl}/branches/${id}`,
+    delete: (id: string) => `${environment.apiUrl}/branches/${id}`,
   },
   employees: {
     list: `${environment.apiUrl}/employees`,
+    detail: (id: string) => `${environment.apiUrl}/employees/${id}`,
+    create: `${environment.apiUrl}/employees`,
+    update: (id: string) => `${environment.apiUrl}/employees/${id}`,
+    delete: (id: string) => `${environment.apiUrl}/employees/${id}`,
   },
   customers: {
     list: `${environment.apiUrl}/customers`,
+    detail: (id: string) => `${environment.apiUrl}/customers/${id}`,
+    create: `${environment.apiUrl}/customers`,
+    update: (id: string) => `${environment.apiUrl}/customers/${id}`,
+    delete: (id: string) => `${environment.apiUrl}/customers/${id}`,
   },
   reservations: {
     list: `${environment.apiUrl}/reservations`,
     detail: (id: string) => `${environment.apiUrl}/reservations/${id}`,
     create: `${environment.apiUrl}/reservations`,
     update: (id: string) => `${environment.apiUrl}/reservations/${id}`,
-    updateStatus: (id: string) => `${environment.apiUrl}/reservations/${id}/status`,
+    updateStatus: (id: string) => `${environment.apiUrl}/reservations/${id}`,
+    delete: (id: string) => `${environment.apiUrl}/reservations/${id}`,
   },
   coupons: {
     list: `${environment.apiUrl}/coupons`,
