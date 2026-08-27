@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { SidebarComponent } from './sidebar.component';
 import { TopbarComponent } from './topbar.component';
+import { PwaInstallPromptComponent } from '../../shared/components/pwa-install-prompt/pwa-install-prompt.component';
 
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, SidebarComponent, TopbarComponent],
+  imports: [CommonModule, RouterOutlet, SidebarComponent, TopbarComponent, PwaInstallPromptComponent],
   template: `
     <div class="flex min-h-screen bg-background text-text-primary font-sans antialiased transition-colors duration-200">
       <!-- Persistent Role-Gated Sidebar (240px / 72px) -->
@@ -22,6 +23,9 @@ import { TopbarComponent } from './topbar.component';
           <router-outlet></router-outlet>
         </main>
       </div>
+
+      <!-- PWA Install Prompt Banner -->
+      <app-pwa-install-prompt></app-pwa-install-prompt>
     </div>
   `,
 })
